@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { createYazdPluginRegistry, type YazdKnowledgeBasePlugin } from "../src/index.ts";
+import {
+  createYazdPluginRegistry,
+  summariseYazdReviewItems,
+  type YazdKnowledgeBasePlugin,
+} from "../src/index.ts";
 
 describe("@kkarimi/yazd-core", () => {
   it("lists cloned source plugins", () => {
@@ -63,5 +67,50 @@ describe("@kkarimi/yazd-core", () => {
     const loaded = registry.getKnowledgeBasePlugin("obsidian");
     expect(loaded?.kinds).toEqual(["obsidian-vault"]);
     expect(loaded?.kinds).not.toBe(plugin.kinds);
+  });
+
+  it("summarises review items by bucket", () => {
+    expect(
+      summariseYazdReviewItems([
+        {
+          bucket: "recovery",
+          id: "issue:sync",
+          payload: {},
+          priority: 0,
+          status: "error",
+          subtitle: "sync-stale",
+          summary: "Sync is stale",
+          timestamp: "2026-04-09T00:00:00Z",
+          title: "Sync stale",
+        },
+        {
+          bucket: "publish",
+          id: "artefact:notes",
+          payload: {},
+          priority: 1,
+          status: "generated",
+          subtitle: "notes",
+          summary: "Draft notes ready",
+          timestamp: "2026-04-09T00:00:01Z",
+          title: "Notes draft",
+        },
+        {
+          bucket: "approval",
+          id: "run:approve",
+          payload: {},
+          priority: 2,
+          status: "pending",
+          subtitle: "approval",
+          summary: "Waiting for approval",
+          timestamp: "2026-04-09T00:00:02Z",
+          title: "Approval run",
+        },
+      ]),
+    ).toEqual({
+      approval: 1,
+      publish: 1,
+      recovery: 1,
+      total: 3,
+    });
   });
 });

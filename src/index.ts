@@ -1,4 +1,6 @@
 export type YazdReviewStatus = "generated" | "needs-review" | "approved" | "rejected";
+export type YazdReviewBucket = "recovery" | "approval" | "publish";
+export type YazdReviewDecision = "approve" | "reject";
 
 export type YazdArtifactKind =
   | "note"
@@ -38,6 +40,31 @@ export interface YazdArtifactBundle {
   url?: string;
   metadata?: Record<string, unknown>;
   artifacts: YazdArtifact[];
+}
+
+export interface YazdReviewDecisionInput {
+  decision: YazdReviewDecision;
+  note?: string;
+  publishTargetId?: string;
+}
+
+export interface YazdReviewItem<TPayload = Record<string, unknown>> {
+  bucket: YazdReviewBucket;
+  id: string;
+  payload: TPayload;
+  priority: number;
+  status: string;
+  subtitle: string;
+  summary: string;
+  timestamp: string;
+  title: string;
+}
+
+export interface YazdReviewSummary {
+  approval: number;
+  publish: number;
+  recovery: number;
+  total: number;
 }
 
 export interface YazdSourceListInput {
@@ -182,6 +209,32 @@ export interface YazdPluginRegistryInput {
   sourcePlugins?: YazdSourcePlugin[];
   knowledgeBasePlugins?: YazdKnowledgeBasePlugin[];
   agentPlugins?: YazdAgentPlugin[];
+}
+
+export function summariseYazdReviewItems(items: YazdReviewItem[]): YazdReviewSummary {
+  return items.reduce<YazdReviewSummary>(
+    (summary, item) => {
+      summary.total += 1;
+      switch (item.bucket) {
+        case "approval":
+          summary.approval += 1;
+          break;
+        case "publish":
+          summary.publish += 1;
+          break;
+        case "recovery":
+          summary.recovery += 1;
+          break;
+      }
+      return summary;
+    },
+    {
+      approval: 0,
+      publish: 0,
+      recovery: 0,
+      total: 0,
+    },
+  );
 }
 
 function cloneSourcePlugin(plugin: YazdSourcePlugin): YazdSourcePlugin {
