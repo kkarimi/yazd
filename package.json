@@ -32,6 +32,7 @@
   "scripts": {
     "build": "vp pack",
     "check": "vp check",
+    "prepare": "vp pack",
     "test": "vp test",
     "typecheck": "vp exec tsc --noEmit"
   },
