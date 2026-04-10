@@ -66,6 +66,157 @@ export interface YazdStructuredOutput<TRole = string> {
   title: string;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+function stringValue(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+export function normaliseYazdStringList(value: unknown): string[] {
+  return stringArray(value)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+export function normaliseYazdStructuredSections(value: unknown): YazdStructuredSection[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => {
+      const record = asRecord(item);
+      if (!record) {
+        return undefined;
+      }
+
+      const title = stringValue(record.title).trim();
+      const body = stringValue(record.body).trim();
+      if (!title || !body) {
+        return undefined;
+      }
+
+      return { body, title };
+    })
+    .filter((item): item is YazdStructuredSection => Boolean(item));
+}
+
+export function normaliseYazdStructuredActionItems<TRole = string>(
+  value: unknown,
+): YazdStructuredActionItem<TRole>[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const items = value
+    .map((item) => {
+      const record = asRecord(item);
+      if (!record) {
+        return undefined;
+      }
+
+      const title = stringValue(record.title).trim();
+      if (!title) {
+        return undefined;
+      }
+
+      const ownerRole = stringValue(record.ownerRole).trim();
+      return {
+        dueDate: stringValue(record.dueDate).trim() || undefined,
+        owner: stringValue(record.owner).trim() || undefined,
+        ownerEmail: stringValue(record.ownerEmail).trim() || undefined,
+        ownerOriginal: stringValue(record.ownerOriginal).trim() || undefined,
+        ownerRole: (ownerRole || undefined) as TRole | undefined,
+        title,
+      };
+    })
+    .filter((item) => Boolean(item));
+
+  return items as YazdStructuredActionItem<TRole>[];
+}
+
+export function normaliseYazdStructuredParticipantSummaries<TRole = string>(
+  value: unknown,
+): YazdStructuredParticipantSummary<TRole>[] | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+
+  const summaries = value
+    .map((item) => {
+      const record = asRecord(item);
+      if (!record) {
+        return undefined;
+      }
+
+      const speaker = stringValue(record.speaker).trim();
+      const summary = stringValue(record.summary).trim();
+      if (!speaker || !summary) {
+        return undefined;
+      }
+
+      const role = stringValue(record.role).trim();
+      return {
+        actionItems: normaliseYazdStringList(record.actionItems),
+        role: (role || undefined) as TRole | undefined,
+        speaker,
+        summary,
+      };
+    })
+    .filter((item) => Boolean(item)) as YazdStructuredParticipantSummary<TRole>[];
+
+  return summaries.length > 0 ? summaries : undefined;
+}
+
+export interface NormaliseYazdStructuredOutputOptions<TRole = string> {
+  actionItems?: (value: unknown) => YazdStructuredActionItem<TRole>[];
+  fallbackTitle?: string;
+  participantSummaries?: (value: unknown) => YazdStructuredParticipantSummary<TRole>[] | undefined;
+}
+
+export function normaliseYazdStructuredOutput<TRole = string>(
+  value: unknown,
+  options: NormaliseYazdStructuredOutputOptions<TRole> = {},
+): YazdStructuredOutput<TRole> | undefined {
+  const record = asRecord(value);
+  if (!record) {
+    return undefined;
+  }
+
+  const title = stringValue(record.title).trim() || options.fallbackTitle?.trim() || "";
+  const markdown = stringValue(record.markdown).trim();
+  if (!title || !markdown) {
+    return undefined;
+  }
+
+  return {
+    actionItems:
+      options.actionItems?.(record.actionItems) ??
+      normaliseYazdStructuredActionItems(record.actionItems),
+    decisions: normaliseYazdStringList(record.decisions),
+    followUps: normaliseYazdStringList(record.followUps),
+    highlights: normaliseYazdStringList(record.highlights),
+    markdown,
+    metadata: asRecord(record.metadata),
+    participantSummaries:
+      options.participantSummaries?.(record.participantSummaries) ??
+      normaliseYazdStructuredParticipantSummaries(record.participantSummaries),
+    sections: normaliseYazdStructuredSections(record.sections),
+    summary: stringValue(record.summary).trim() || undefined,
+    title,
+  };
+}
+
 export function cloneYazdStructuredOutput<TRole>(
   structured: YazdStructuredOutput<TRole>,
 ): YazdStructuredOutput<TRole> {

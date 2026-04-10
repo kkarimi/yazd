@@ -6,6 +6,7 @@ import {
   buildYazdApprovalReviewItem,
   buildYazdIssueReviewItem,
   buildYazdPublishReviewItem,
+  normaliseYazdStructuredOutput,
   completeYazdWorkflowRun,
   createYazdPluginRegistry,
   failYazdWorkflowRun,
@@ -305,6 +306,80 @@ describe("@kkarimi/yazd-core", () => {
     expect(cloned.actionItems).not.toBe(output.actionItems);
     expect(cloned.sections).not.toBe(output.sections);
     expect(cloned.participantSummaries).not.toBe(output.participantSummaries);
+  });
+
+  it("normalises generic structured output payloads", () => {
+    expect(
+      normaliseYazdStructuredOutput({
+        actionItems: [
+          {
+            owner: "Nima",
+            ownerRole: "owner",
+            title: "Follow up",
+          },
+        ],
+        decisions: ["Ship it"],
+        followUps: ["Email team"],
+        highlights: ["Launch blocked on review"],
+        markdown: "# Draft",
+        participantSummaries: [
+          {
+            actionItems: ["Follow up"],
+            role: "participant",
+            speaker: "Nima",
+            summary: "Asked for a rollout plan",
+          },
+        ],
+        sections: [{ body: "Draft body", title: "Summary" }],
+        summary: "Draft body",
+        title: "Draft",
+      }),
+    ).toEqual({
+      actionItems: [
+        {
+          owner: "Nima",
+          ownerRole: "owner",
+          title: "Follow up",
+        },
+      ],
+      decisions: ["Ship it"],
+      followUps: ["Email team"],
+      highlights: ["Launch blocked on review"],
+      markdown: "# Draft",
+      participantSummaries: [
+        {
+          actionItems: ["Follow up"],
+          role: "participant",
+          speaker: "Nima",
+          summary: "Asked for a rollout plan",
+        },
+      ],
+      sections: [{ body: "Draft body", title: "Summary" }],
+      summary: "Draft body",
+      title: "Draft",
+    });
+
+    expect(
+      normaliseYazdStructuredOutput(
+        {
+          markdown: "# Draft",
+        },
+        {
+          fallbackTitle: "Fallback title",
+        },
+      ),
+    ).toEqual({
+      actionItems: [],
+      decisions: [],
+      followUps: [],
+      highlights: [],
+      markdown: "# Draft",
+      metadata: undefined,
+      participantSummaries: undefined,
+      sections: [],
+      summary: undefined,
+      title: "Fallback title",
+    });
   });
 
   it("provides generic workflow run lifecycle helpers", () => {
