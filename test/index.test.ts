@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   createYazdPluginRegistry,
   summariseYazdReviewItems,
+  sortYazdReviewItems,
   type YazdKnowledgeBasePlugin,
 } from "../src/index.ts";
 
@@ -112,5 +113,45 @@ describe("@kkarimi/yazd-core", () => {
       recovery: 1,
       total: 3,
     });
+  });
+
+  it("sorts review items by priority, timestamp, title, and id", () => {
+    expect(
+      sortYazdReviewItems([
+        {
+          bucket: "publish",
+          id: "b",
+          payload: {},
+          priority: 2,
+          status: "generated",
+          subtitle: "publish",
+          summary: "later",
+          timestamp: "2026-04-09T00:00:00Z",
+          title: "Beta",
+        },
+        {
+          bucket: "recovery",
+          id: "a",
+          payload: {},
+          priority: 0,
+          status: "error",
+          subtitle: "recovery",
+          summary: "first",
+          timestamp: "2026-04-08T00:00:00Z",
+          title: "Alpha",
+        },
+        {
+          bucket: "publish",
+          id: "c",
+          payload: {},
+          priority: 2,
+          status: "generated",
+          subtitle: "publish",
+          summary: "newer",
+          timestamp: "2026-04-10T00:00:00Z",
+          title: "Alpha",
+        },
+      ]).map((item) => item.id),
+    ).toEqual(["a", "c", "b"]);
   });
 });
