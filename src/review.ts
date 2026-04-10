@@ -63,9 +63,9 @@ export function summariseYazdReviewItems(items: readonly YazdReviewItem[]): Yazd
   );
 }
 
-export function sortYazdReviewItems<TPayload>(
-  items: readonly YazdReviewItem<TPayload>[],
-): YazdReviewItem<TPayload>[] {
+export function sortYazdReviewItems<TItem extends YazdReviewItem>(
+  items: readonly TItem[],
+): TItem[] {
   return items
     .slice()
     .sort(
