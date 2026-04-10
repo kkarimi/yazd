@@ -7,6 +7,7 @@ import {
   createYazdPluginRegistry,
   summariseYazdReviewItems,
   sortYazdReviewItems,
+  type YazdCommandWorkflowAction,
   type YazdKnowledgeBasePlugin,
   type YazdPublishReviewItem,
 } from "../src/index.ts";
@@ -226,5 +227,18 @@ describe("@kkarimi/yazd-core", () => {
     expect(issue.payload.issue.id).toBe("sync");
     expect(draft.payload.draft.id).toBe("notes-1");
     expect(approval.payload.request.id).toBe("run-1");
+  });
+
+  it("supports reusable generic workflow action types", () => {
+    const action: YazdCommandWorkflowAction = {
+      args: ["hello"],
+      command: "echo",
+      id: "command-1",
+      kind: "command",
+      trigger: "approval",
+    };
+
+    expect(action.kind).toBe("command");
+    expect(action.trigger).toBe("approval");
   });
 });
