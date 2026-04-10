@@ -6,6 +6,8 @@ import {
   buildYazdApprovalReviewItem,
   buildYazdIssueReviewItem,
   buildYazdPublishReviewItem,
+  normaliseYazdArtifactAttempt,
+  normaliseYazdArtifactParseMode,
   normaliseYazdStructuredOutput,
   completeYazdWorkflowRun,
   createYazdPluginRegistry,
@@ -14,6 +16,8 @@ import {
   summariseYazdReviewItems,
   sortYazdReviewItems,
   type YazdApprovalMode,
+  type YazdArtifactAttempt,
+  type YazdArtifactParseMode,
   type YazdArtefactHistoryEntry,
   type YazdArtefactStatus,
   type YazdCommandWorkflowAction,
@@ -256,7 +260,12 @@ describe("@kkarimi/yazd-core", () => {
 
   it("exports generic review lifecycle types", () => {
     const mode: YazdApprovalMode = "manual";
+    const parseMode: YazdArtifactParseMode = "json";
     const status: YazdArtefactStatus = "generated";
+    const attempt: YazdArtifactAttempt<"openai" | "codex"> = {
+      model: "gpt-5",
+      provider: "openai",
+    };
     const history: YazdArtefactHistoryEntry = {
       action: "generated",
       at: "2026-04-10T00:00:00Z",
@@ -264,7 +273,9 @@ describe("@kkarimi/yazd-core", () => {
     };
 
     expect(mode).toBe("manual");
+    expect(parseMode).toBe("json");
     expect(status).toBe("generated");
+    expect(attempt.provider).toBe("openai");
     expect(history.action).toBe("generated");
   });
 
@@ -380,6 +391,46 @@ describe("@kkarimi/yazd-core", () => {
       summary: undefined,
       title: "Fallback title",
     });
+  });
+
+  it("normalises generic artifact attempts and parse modes", () => {
+    expect(
+      normaliseYazdArtifactAttempt(
+        {
+          error: "boom",
+          harnessId: "harness-1",
+          model: "gpt-5",
+          provider: "openai",
+        },
+        {
+          providers: ["codex", "openai"] as const,
+        },
+      ),
+    ).toEqual({
+      error: "boom",
+      harnessId: "harness-1",
+      model: "gpt-5",
+      provider: "openai",
+    });
+
+    expect(
+      normaliseYazdArtifactAttempt(
+        {
+          model: "gpt-5",
+          provider: "unsupported",
+        },
+        {
+          providers: ["codex", "openai"] as const,
+        },
+      ),
+    ).toEqual({
+      model: "gpt-5",
+      provider: undefined,
+    });
+
+    expect(normaliseYazdArtifactParseMode("json")).toBe("json");
+    expect(normaliseYazdArtifactParseMode("markdown-fallback")).toBe("markdown-fallback");
+    expect(normaliseYazdArtifactParseMode("xml")).toBeUndefined();
   });
 
   it("provides generic workflow run lifecycle helpers", () => {

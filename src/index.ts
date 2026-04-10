@@ -32,6 +32,15 @@ export interface YazdArtifact<TMeta = Record<string, unknown>> {
   provenance: YazdArtifactProvenance;
 }
 
+export type YazdArtifactParseMode = "json" | "markdown-fallback";
+
+export interface YazdArtifactAttempt<TProvider extends string = string> {
+  error?: string;
+  harnessId?: string;
+  model?: string;
+  provider?: TProvider;
+}
+
 export interface YazdStructuredSection {
   body: string;
   title: string;
@@ -86,6 +95,51 @@ export function normaliseYazdStringList(value: unknown): string[] {
   return stringArray(value)
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+export interface NormaliseYazdArtifactAttemptOptions<TProvider extends string = string> {
+  providers?: readonly TProvider[];
+}
+
+export function normaliseYazdArtifactAttempt<TProvider extends string = string>(
+  value: unknown,
+  options: NormaliseYazdArtifactAttemptOptions<TProvider> = {},
+): YazdArtifactAttempt<TProvider> | undefined {
+  const record = asRecord(value);
+  if (!record) {
+    return undefined;
+  }
+
+  const provider = stringValue(record.provider).trim();
+  const model = stringValue(record.model).trim();
+  const harnessId = stringValue(record.harnessId).trim();
+  const error = stringValue(record.error).trim();
+  if (!provider && !model && !harnessId && !error) {
+    return undefined;
+  }
+
+  const allowedProviders = options.providers;
+  const parsedProvider =
+    provider && (!allowedProviders || allowedProviders.includes(provider as TProvider))
+      ? (provider as TProvider)
+      : undefined;
+
+  return {
+    error: error || undefined,
+    harnessId: harnessId || undefined,
+    model: model || undefined,
+    provider: parsedProvider,
+  };
+}
+
+export function normaliseYazdArtifactParseMode(value: unknown): YazdArtifactParseMode | undefined {
+  switch (stringValue(value).trim()) {
+    case "json":
+    case "markdown-fallback":
+      return stringValue(value).trim() as YazdArtifactParseMode;
+    default:
+      return undefined;
+  }
 }
 
 export function normaliseYazdStructuredSections(value: unknown): YazdStructuredSection[] {
