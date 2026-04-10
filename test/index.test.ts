@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildYazdApprovalWorkflowRunId,
   buildYazdWorkflowRunId,
   buildYazdApprovalReviewItem,
   buildYazdIssueReviewItem,
@@ -248,14 +249,24 @@ describe("@kkarimi/yazd-core", () => {
   });
 
   it("provides generic workflow run lifecycle helpers", () => {
-    const run = {
+    const run: {
+      error?: string;
+      finishedAt?: string;
+      id: string;
+      result?: string;
+      startedAt: string;
+      status: "pending";
+    } = {
       id: "run-1",
       startedAt: "2026-04-10T00:00:00Z",
-      status: "pending" as const,
+      status: "pending",
     };
 
     expect(yazdWorkflowActionName({ id: "action-1", name: "Notify team" })).toBe("Notify team");
     expect(buildYazdWorkflowRunId("match-1", "action-1")).toBe("match-1:action-1");
+    expect(buildYazdApprovalWorkflowRunId("artefact-1", "action-1")).toBe(
+      "approval:artefact-1:action-1",
+    );
     expect(
       completeYazdWorkflowRun(run, "2026-04-10T00:01:00Z", {
         result: "done",

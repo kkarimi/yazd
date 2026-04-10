@@ -96,6 +96,10 @@ export function buildYazdWorkflowRunId(matchId: string, actionId: string): strin
   return `${matchId}:${actionId}`;
 }
 
+export function buildYazdApprovalWorkflowRunId(subjectId: string, actionId: string): string {
+  return `approval:${subjectId}:${actionId}`;
+}
+
 export function completeYazdWorkflowRun<TRun extends YazdWorkflowRun>(
   run: TRun,
   finishedAt: string,
