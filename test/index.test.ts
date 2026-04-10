@@ -12,6 +12,9 @@ import {
   skipYazdWorkflowRun,
   summariseYazdReviewItems,
   sortYazdReviewItems,
+  type YazdApprovalMode,
+  type YazdArtefactHistoryEntry,
+  type YazdArtefactStatus,
   type YazdCommandWorkflowAction,
   type YazdKnowledgeBasePlugin,
   type YazdPublishReviewItem,
@@ -246,6 +249,20 @@ describe("@kkarimi/yazd-core", () => {
 
     expect(action.kind).toBe("command");
     expect(action.trigger).toBe("approval");
+  });
+
+  it("exports generic review lifecycle types", () => {
+    const mode: YazdApprovalMode = "manual";
+    const status: YazdArtefactStatus = "generated";
+    const history: YazdArtefactHistoryEntry = {
+      action: "generated",
+      at: "2026-04-10T00:00:00Z",
+      note: "Initial draft",
+    };
+
+    expect(mode).toBe("manual");
+    expect(status).toBe("generated");
+    expect(history.action).toBe("generated");
   });
 
   it("provides generic workflow run lifecycle helpers", () => {

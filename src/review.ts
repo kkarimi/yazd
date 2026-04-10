@@ -2,6 +2,15 @@ export type YazdReviewStatus = "generated" | "needs-review" | "approved" | "reje
 export type YazdReviewBucket = "recovery" | "approval" | "publish";
 export type YazdReviewDecision = "approve" | "reject";
 export type YazdReviewIssueSeverity = "error" | "warning" | (string & {});
+export type YazdApprovalMode = "auto" | "manual";
+export type YazdArtefactHistoryAction = "approved" | "edited" | "generated" | "rejected" | "rerun";
+export type YazdArtefactStatus = "approved" | "generated" | "rejected" | "superseded";
+
+export interface YazdArtefactHistoryEntry {
+  action: YazdArtefactHistoryAction;
+  at: string;
+  note?: string;
+}
 
 export interface YazdReviewIssue {
   detail: string;
