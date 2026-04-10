@@ -5,6 +5,7 @@ import {
   summariseYazdReviewItems,
   sortYazdReviewItems,
   type YazdKnowledgeBasePlugin,
+  type YazdPublishReviewItem,
 } from "../src/index.ts";
 
 describe("@kkarimi/yazd-core", () => {
@@ -153,5 +154,29 @@ describe("@kkarimi/yazd-core", () => {
         },
       ]).map((item) => item.id),
     ).toEqual(["a", "c", "b"]);
+  });
+
+  it("supports typed publish review items", () => {
+    const item: YazdPublishReviewItem<{ id: string }, "artefact"> = {
+      bucket: "publish",
+      draft: { id: "notes-1" },
+      id: "artefact:notes-1",
+      key: "artefact:notes-1",
+      kind: "artefact",
+      meetingId: "meeting-1",
+      payload: {
+        draft: { id: "notes-1" },
+        kind: "artefact",
+      },
+      priority: 2,
+      status: "generated",
+      subtitle: "notes",
+      summary: "Draft notes ready",
+      timestamp: "2026-04-09T00:00:01Z",
+      title: "Notes draft",
+    };
+
+    expect(item.draft.id).toBe("notes-1");
+    expect(item.kind).toBe("artefact");
   });
 });

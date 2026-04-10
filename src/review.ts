@@ -30,6 +30,48 @@ export interface YazdReviewItem<TPayload = Record<string, unknown>> {
   title: string;
 }
 
+export interface YazdIssueReviewItem<
+  TIssue,
+  TKind extends string = "issue",
+> extends YazdReviewItem<{
+  issue: TIssue;
+  kind: TKind;
+}> {
+  bucket: "recovery";
+  issue: TIssue;
+  key: string;
+  kind: TKind;
+  meetingId?: string;
+}
+
+export interface YazdPublishReviewItem<
+  TDraft,
+  TKind extends string = "draft",
+> extends YazdReviewItem<{
+  draft: TDraft;
+  kind: TKind;
+}> {
+  bucket: "publish";
+  draft: TDraft;
+  key: string;
+  kind: TKind;
+  meetingId: string;
+}
+
+export interface YazdApprovalReviewItem<
+  TRequest,
+  TKind extends string = "approval-request",
+> extends YazdReviewItem<{
+  kind: TKind;
+  request: TRequest;
+}> {
+  bucket: "approval";
+  key: string;
+  kind: TKind;
+  meetingId: string;
+  request: TRequest;
+}
+
 export interface YazdReviewSummary {
   approval: number;
   publish: number;
