@@ -79,6 +79,90 @@ export interface YazdReviewSummary {
   total: number;
 }
 
+export interface BuildYazdIssueReviewItemInput<TIssue, TKind extends string = "issue"> {
+  id: string;
+  issue: TIssue;
+  key: string;
+  kind: TKind;
+  meetingId?: string;
+  priority: number;
+  status: string;
+  subtitle: string;
+  summary: string;
+  timestamp: string;
+  title: string;
+}
+
+export interface BuildYazdPublishReviewItemInput<TDraft, TKind extends string = "draft"> {
+  draft: TDraft;
+  id: string;
+  key: string;
+  kind: TKind;
+  meetingId: string;
+  priority: number;
+  status: string;
+  subtitle: string;
+  summary: string;
+  timestamp: string;
+  title: string;
+}
+
+export interface BuildYazdApprovalReviewItemInput<
+  TRequest,
+  TKind extends string = "approval-request",
+> {
+  id: string;
+  key: string;
+  kind: TKind;
+  meetingId: string;
+  priority: number;
+  request: TRequest;
+  status: string;
+  subtitle: string;
+  summary: string;
+  timestamp: string;
+  title: string;
+}
+
+export function buildYazdIssueReviewItem<TIssue, TKind extends string = "issue">(
+  input: BuildYazdIssueReviewItemInput<TIssue, TKind>,
+): YazdIssueReviewItem<TIssue, TKind> {
+  return {
+    ...input,
+    bucket: "recovery",
+    payload: {
+      issue: input.issue,
+      kind: input.kind,
+    },
+  };
+}
+
+export function buildYazdPublishReviewItem<TDraft, TKind extends string = "draft">(
+  input: BuildYazdPublishReviewItemInput<TDraft, TKind>,
+): YazdPublishReviewItem<TDraft, TKind> {
+  return {
+    ...input,
+    bucket: "publish",
+    payload: {
+      draft: input.draft,
+      kind: input.kind,
+    },
+  };
+}
+
+export function buildYazdApprovalReviewItem<TRequest, TKind extends string = "approval-request">(
+  input: BuildYazdApprovalReviewItemInput<TRequest, TKind>,
+): YazdApprovalReviewItem<TRequest, TKind> {
+  return {
+    ...input,
+    bucket: "approval",
+    payload: {
+      kind: input.kind,
+      request: input.request,
+    },
+  };
+}
+
 export function summariseYazdReviewItems(items: readonly YazdReviewItem[]): YazdReviewSummary {
   return items.reduce<YazdReviewSummary>(
     (summary, item) => {

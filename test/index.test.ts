@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildYazdApprovalReviewItem,
+  buildYazdIssueReviewItem,
+  buildYazdPublishReviewItem,
   createYazdPluginRegistry,
   summariseYazdReviewItems,
   sortYazdReviewItems,
@@ -178,5 +181,50 @@ describe("@kkarimi/yazd-core", () => {
 
     expect(item.draft.id).toBe("notes-1");
     expect(item.kind).toBe("artefact");
+  });
+
+  it("builds typed review items", () => {
+    const issue = buildYazdIssueReviewItem({
+      id: "issue:sync",
+      issue: { id: "sync" },
+      key: "issue:sync",
+      kind: "issue" as const,
+      priority: 0,
+      status: "error",
+      subtitle: "sync-stale",
+      summary: "Sync is stale",
+      timestamp: "2026-04-09T00:00:00Z",
+      title: "Sync stale",
+    });
+    const draft = buildYazdPublishReviewItem({
+      draft: { id: "notes-1" },
+      id: "artefact:notes-1",
+      key: "artefact:notes-1",
+      kind: "artefact" as const,
+      meetingId: "meeting-1",
+      priority: 2,
+      status: "generated",
+      subtitle: "notes",
+      summary: "Draft notes ready",
+      timestamp: "2026-04-09T00:00:01Z",
+      title: "Notes draft",
+    });
+    const approval = buildYazdApprovalReviewItem({
+      id: "run:approve",
+      key: "run:approve",
+      kind: "run" as const,
+      meetingId: "meeting-1",
+      priority: 3,
+      request: { id: "run-1" },
+      status: "pending",
+      subtitle: "approval",
+      summary: "Waiting for approval",
+      timestamp: "2026-04-09T00:00:02Z",
+      title: "Approval run",
+    });
+
+    expect(issue.payload.issue.id).toBe("sync");
+    expect(draft.payload.draft.id).toBe("notes-1");
+    expect(approval.payload.request.id).toBe("run-1");
   });
 });
