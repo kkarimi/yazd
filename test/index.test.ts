@@ -1,15 +1,20 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildYazdWorkflowRunId,
   buildYazdApprovalReviewItem,
   buildYazdIssueReviewItem,
   buildYazdPublishReviewItem,
+  completeYazdWorkflowRun,
   createYazdPluginRegistry,
+  failYazdWorkflowRun,
+  skipYazdWorkflowRun,
   summariseYazdReviewItems,
   sortYazdReviewItems,
   type YazdCommandWorkflowAction,
   type YazdKnowledgeBasePlugin,
   type YazdPublishReviewItem,
+  yazdWorkflowActionName,
 } from "../src/index.ts";
 
 describe("@kkarimi/yazd-core", () => {
@@ -240,5 +245,41 @@ describe("@kkarimi/yazd-core", () => {
 
     expect(action.kind).toBe("command");
     expect(action.trigger).toBe("approval");
+  });
+
+  it("provides generic workflow run lifecycle helpers", () => {
+    const run = {
+      id: "run-1",
+      startedAt: "2026-04-10T00:00:00Z",
+      status: "pending" as const,
+    };
+
+    expect(yazdWorkflowActionName({ id: "action-1", name: "Notify team" })).toBe("Notify team");
+    expect(buildYazdWorkflowRunId("match-1", "action-1")).toBe("match-1:action-1");
+    expect(
+      completeYazdWorkflowRun(run, "2026-04-10T00:01:00Z", {
+        result: "done",
+      }),
+    ).toEqual({
+      finishedAt: "2026-04-10T00:01:00Z",
+      id: "run-1",
+      result: "done",
+      startedAt: "2026-04-10T00:00:00Z",
+      status: "completed",
+    });
+    expect(failYazdWorkflowRun(run, "2026-04-10T00:01:00Z", new Error("boom"))).toEqual({
+      error: "boom",
+      finishedAt: "2026-04-10T00:01:00Z",
+      id: "run-1",
+      startedAt: "2026-04-10T00:00:00Z",
+      status: "failed",
+    });
+    expect(skipYazdWorkflowRun(run, "2026-04-10T00:01:00Z", "no content")).toEqual({
+      finishedAt: "2026-04-10T00:01:00Z",
+      id: "run-1",
+      result: "no content",
+      startedAt: "2026-04-10T00:00:00Z",
+      status: "skipped",
+    });
   });
 });

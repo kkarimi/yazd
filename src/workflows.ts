@@ -35,6 +35,10 @@ export interface YazdWorkflowActionBase extends YazdWorkflowActionDefinition {
   id: string;
 }
 
+export interface YazdWorkflowNamedAction extends YazdWorkflowActionBase {
+  name?: string;
+}
+
 export interface YazdTriggeredWorkflowAction extends YazdWorkflowActionBase {
   sourceActionId?: string;
   trigger?: YazdWorkflowTrigger;
@@ -80,6 +84,55 @@ export interface YazdWriteFileWorkflowAction extends YazdTriggeredWorkflowAction
   kind: "write-file";
   outputDir: string;
   overwrite?: boolean;
+}
+
+export function yazdWorkflowActionName(
+  action: Pick<YazdWorkflowNamedAction, "id" | "name">,
+): string {
+  return action.name || action.id;
+}
+
+export function buildYazdWorkflowRunId(matchId: string, actionId: string): string {
+  return `${matchId}:${actionId}`;
+}
+
+export function completeYazdWorkflowRun<TRun extends YazdWorkflowRun>(
+  run: TRun,
+  finishedAt: string,
+  patch: Partial<TRun> = {},
+): TRun {
+  return {
+    ...run,
+    ...patch,
+    finishedAt,
+    status: "completed",
+  };
+}
+
+export function failYazdWorkflowRun<TRun extends YazdWorkflowRun>(
+  run: TRun,
+  finishedAt: string,
+  error: unknown,
+): TRun {
+  return {
+    ...run,
+    error: error instanceof Error ? error.message : String(error),
+    finishedAt,
+    status: "failed",
+  };
+}
+
+export function skipYazdWorkflowRun<TRun extends YazdWorkflowRun>(
+  run: TRun,
+  finishedAt: string,
+  reason: string,
+): TRun {
+  return {
+    ...run,
+    finishedAt,
+    result: reason,
+    status: "skipped",
+  };
 }
 
 export interface YazdWorkflowDefinition {
