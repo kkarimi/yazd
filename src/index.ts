@@ -32,6 +32,40 @@ export interface YazdArtifact<TMeta = Record<string, unknown>> {
   provenance: YazdArtifactProvenance;
 }
 
+export interface YazdStructuredSection {
+  body: string;
+  title: string;
+}
+
+export interface YazdStructuredActionItem<TRole = string> {
+  dueDate?: string;
+  owner?: string;
+  ownerEmail?: string;
+  ownerOriginal?: string;
+  ownerRole?: TRole;
+  title: string;
+}
+
+export interface YazdStructuredParticipantSummary<TRole = string> {
+  actionItems: string[];
+  role?: TRole;
+  speaker: string;
+  summary: string;
+}
+
+export interface YazdStructuredOutput<TRole = string> {
+  actionItems: YazdStructuredActionItem<TRole>[];
+  decisions: string[];
+  followUps: string[];
+  highlights: string[];
+  markdown: string;
+  metadata?: Record<string, unknown>;
+  participantSummaries?: YazdStructuredParticipantSummary<TRole>[];
+  sections: YazdStructuredSection[];
+  summary?: string;
+  title: string;
+}
+
 export interface YazdArtifactBundle {
   sourcePluginId: string;
   sourceItemId: string;

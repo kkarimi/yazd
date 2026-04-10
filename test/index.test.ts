@@ -18,6 +18,7 @@ import {
   type YazdCommandWorkflowAction,
   type YazdKnowledgeBasePlugin,
   type YazdPublishReviewItem,
+  type YazdStructuredOutput,
   yazdWorkflowActionName,
 } from "../src/index.ts";
 
@@ -263,6 +264,39 @@ describe("@kkarimi/yazd-core", () => {
     expect(mode).toBe("manual");
     expect(status).toBe("generated");
     expect(history.action).toBe("generated");
+  });
+
+  it("exports generic structured draft types", () => {
+    const output: YazdStructuredOutput<"owner" | "participant"> = {
+      actionItems: [
+        {
+          ownerRole: "owner",
+          title: "Follow up",
+        },
+      ],
+      decisions: ["Ship it"],
+      followUps: ["Email team"],
+      highlights: ["Launch blocked on review"],
+      markdown: "# Draft",
+      participantSummaries: [
+        {
+          actionItems: ["Follow up"],
+          role: "participant",
+          speaker: "Nima",
+          summary: "Asked for a rollout plan",
+        },
+      ],
+      sections: [
+        {
+          body: "Draft body",
+          title: "Summary",
+        },
+      ],
+      title: "Draft",
+    };
+
+    expect(output.actionItems[0]?.ownerRole).toBe("owner");
+    expect(output.participantSummaries?.[0]?.role).toBe("participant");
   });
 
   it("provides generic workflow run lifecycle helpers", () => {
