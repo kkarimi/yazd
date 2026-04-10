@@ -19,6 +19,7 @@ import {
   type YazdKnowledgeBasePlugin,
   type YazdPublishReviewItem,
   type YazdStructuredOutput,
+  cloneYazdStructuredOutput,
   yazdWorkflowActionName,
 } from "../src/index.ts";
 
@@ -297,6 +298,13 @@ describe("@kkarimi/yazd-core", () => {
 
     expect(output.actionItems[0]?.ownerRole).toBe("owner");
     expect(output.participantSummaries?.[0]?.role).toBe("participant");
+
+    const cloned = cloneYazdStructuredOutput(output);
+    expect(cloned).toEqual(output);
+    expect(cloned).not.toBe(output);
+    expect(cloned.actionItems).not.toBe(output.actionItems);
+    expect(cloned.sections).not.toBe(output.sections);
+    expect(cloned.participantSummaries).not.toBe(output.participantSummaries);
   });
 
   it("provides generic workflow run lifecycle helpers", () => {

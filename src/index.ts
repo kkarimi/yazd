@@ -66,6 +66,24 @@ export interface YazdStructuredOutput<TRole = string> {
   title: string;
 }
 
+export function cloneYazdStructuredOutput<TRole>(
+  structured: YazdStructuredOutput<TRole>,
+): YazdStructuredOutput<TRole> {
+  return {
+    ...structured,
+    actionItems: structured.actionItems.map((item) => ({ ...item })),
+    decisions: [...structured.decisions],
+    followUps: [...structured.followUps],
+    highlights: [...structured.highlights],
+    metadata: structured.metadata ? structuredClone(structured.metadata) : undefined,
+    participantSummaries: structured.participantSummaries?.map((summary) => ({
+      ...summary,
+      actionItems: [...summary.actionItems],
+    })),
+    sections: structured.sections.map((section) => ({ ...section })),
+  };
+}
+
 export interface YazdArtifactBundle {
   sourcePluginId: string;
   sourceItemId: string;
