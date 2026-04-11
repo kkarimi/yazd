@@ -526,5 +526,7 @@ describe("@kkarimi/yazd-core", () => {
     expect(dashboard.publishState.status).toBe("published");
     expect(dashboard.publishState.publishedPaths).toHaveLength(2);
     expect(dashboard.publishState.publishedAt).toBe("2026-04-11T10:05:00Z");
+    expect(dashboard.activityItems[0]?.kind).toBe("publish");
+    expect(dashboard.activityItems[1]?.kind).toBe("approval");
   });
 });

@@ -123,7 +123,15 @@ export interface AppPublishState {
   title?: string;
 }
 
+export interface AppActivityItem {
+  at: string;
+  detail: string;
+  kind: "approval" | "publish" | "rejection";
+  title: string;
+}
+
 export interface AppDashboard {
+  activityItems: AppActivityItem[];
   draftPreview?: AppDraftPreview;
   publishEntries: AppPublishEntry[];
   publishState: AppPublishState;
@@ -868,6 +876,7 @@ export async function buildDashboard(
     knowledgeBasePlugins: [createKnowledgeBasePlugin("folder"), createKnowledgeBasePlugin("obsidian-vault")],
     sourcePlugins: [createGranSourcePlugin(granEndpoint)],
   });
+  let activityItems: AppActivityItem[] = [];
   let publishState: AppPublishState = {
     artifactCount: 0,
     publishedPaths: [],
@@ -919,7 +928,8 @@ export async function buildDashboard(
     const generatedBundle = buildGeneratedBundle(sourceBundle.bundle, structured, generatedAt);
     const approvalItemId = `approval:${sourceItem.id}`;
     const publishItemId = `publish:${sourceItem.id}`;
-    const approvalDecision = reviewState.itemDecisions[approvalItemId]?.decision;
+    const approvalRecord = reviewState.itemDecisions[approvalItemId];
+    const approvalDecision = approvalRecord?.decision;
     const publishedRecord = reviewState.publishedItems[publishItemId];
     const draftPreview: AppDraftPreview = {
       actionItems: structured.actionItems.map((item) => ({
@@ -934,6 +944,28 @@ export async function buildDashboard(
       summary: structured.summary ?? "Draft is ready for review before publishing.",
       title: structured.title,
     };
+    if (approvalRecord) {
+      activityItems.push({
+        at: approvalRecord.actedAt,
+        detail:
+          approvalRecord.decision === "approved"
+            ? `${structured.title} was approved and can move to publish.`
+            : `${structured.title} was rejected and should be rerun or revised.`,
+        kind: approvalRecord.decision === "approved" ? "approval" : "rejection",
+        title: approvalRecord.decision === "approved" ? "Draft approved" : "Draft rejected",
+      });
+    }
+    if (publishedRecord) {
+      activityItems.push({
+        at: publishedRecord.publishedAt,
+        detail: `Yazd wrote ${publishedRecord.paths.length} files into the selected knowledge base.`,
+        kind: "publish",
+        title: "Published to knowledge base",
+      });
+    }
+    activityItems = activityItems
+      .slice()
+      .sort((left, right) => right.at.localeCompare(left.at));
 
     if (validation && !validation.valid) {
       reviewItems.push(
@@ -1159,6 +1191,7 @@ export async function buildDashboard(
     }
 
     return {
+      activityItems,
       draftPreview,
       publishEntries,
       publishState,
@@ -1202,6 +1235,7 @@ export async function buildDashboard(
     );
 
     return {
+      activityItems: [],
       draftPreview: undefined,
       publishEntries: [],
       publishState,

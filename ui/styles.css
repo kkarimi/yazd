@@ -779,6 +779,15 @@ select:focus {
   padding: 8px 10px;
 }
 
+.compact-list strong {
+  color: #f3f5f8;
+  font-size: 0.84rem;
+}
+
+.activity-detail {
+  color: var(--muted);
+}
+
 .preview-list p {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--line);

@@ -470,14 +470,48 @@ function renderViewContent(
                     <p class="callout-title">${renderPublishStateLabel(dashboard)}</p>
                     <p>${renderPublishStateDetail(dashboard)}</p>
                   </div>
+                    ${
+                      dashboard.publishState.status === "published" && dashboard.publishState.publishedPaths.length > 0
+                        ? `
+                          <div class="preview-list compact-list">
+                            ${dashboard.publishState.publishedPaths.slice(0, 2).map((path) => `<p>${path}</p>`).join("")}
+                          </div>
+                        `
+                        : ""
+                    }
+                </article>
+
+                <article class="pane-card quiet-card">
+                  <div class="card-header">
+                    <div>
+                      <p class="section-kicker">Recent activity</p>
+                      <h3>${dashboard.activityItems[0]?.title ?? "Nothing yet"}</h3>
+                    </div>
+                  </div>
                   ${
-                    dashboard.publishState.status === "published" && dashboard.publishState.publishedPaths.length > 0
+                    dashboard.activityItems.length > 0
                       ? `
                         <div class="preview-list compact-list">
-                          ${dashboard.publishState.publishedPaths.slice(0, 2).map((path) => `<p>${path}</p>`).join("")}
+                          ${dashboard.activityItems
+                            .slice(0, 3)
+                            .map(
+                              (item) => `
+                                <p>
+                                  <strong>${item.title}</strong><br />
+                                  <span class="activity-detail">${item.detail}</span><br />
+                                  <span class="muted">${formatTimestamp(item.at)}</span>
+                                </p>
+                              `,
+                            )
+                            .join("")}
                         </div>
                       `
-                      : ""
+                      : `
+                        <div class="callout-card">
+                          <p class="callout-title">No actions recorded</p>
+                          <p>Approval and publish events will appear here once the workflow starts moving.</p>
+                        </div>
+                      `
                   }
                 </article>
               `
