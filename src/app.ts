@@ -101,7 +101,21 @@ export interface AppPublishEntry extends YazdPublishPlanEntry {
   content: string;
 }
 
+export interface AppDraftPreview {
+  actionItems: Array<{
+    dueDate?: string;
+    owner?: string;
+    title: string;
+  }>;
+  decisions: string[];
+  markdown: string;
+  sourceTitle: string;
+  summary: string;
+  title: string;
+}
+
 export interface AppDashboard {
+  draftPreview?: AppDraftPreview;
   publishEntries: AppPublishEntry[];
   reviewItems: AppReviewQueueItem[];
   runtime: AppRuntimeStatus;
@@ -892,6 +906,18 @@ export async function buildDashboard(
     const publishItemId = `publish:${sourceItem.id}`;
     const approvalDecision = reviewState.itemDecisions[approvalItemId]?.decision;
     const publishedRecord = reviewState.publishedItems[publishItemId];
+    const draftPreview: AppDraftPreview = {
+      actionItems: structured.actionItems.map((item) => ({
+        dueDate: item.dueDate,
+        owner: item.owner,
+        title: item.title,
+      })),
+      decisions: [...structured.decisions],
+      markdown: structured.markdown,
+      sourceTitle: sourceItem.title,
+      summary: structured.summary ?? "Draft is ready for review before publishing.",
+      title: structured.title,
+    };
 
     if (validation && !validation.valid) {
       reviewItems.push(
@@ -1110,6 +1136,7 @@ export async function buildDashboard(
     }
 
     return {
+      draftPreview,
       publishEntries,
       reviewItems: sortYazdReviewItems(reviewItems) as AppReviewQueueItem[],
       runtime: createRuntimeStatus(granEndpoint, runtimeInfo),
@@ -1151,6 +1178,7 @@ export async function buildDashboard(
     );
 
     return {
+      draftPreview: undefined,
       publishEntries: [],
       reviewItems: sortYazdReviewItems(reviewItems) as AppReviewQueueItem[],
       runtime: createRuntimeStatus(granEndpoint, runtimeInfo, message),

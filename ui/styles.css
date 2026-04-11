@@ -695,6 +695,19 @@ select:focus {
   justify-content: space-between;
 }
 
+.publish-card-button {
+  color: inherit;
+  cursor: pointer;
+  display: grid;
+  text-align: left;
+  width: 100%;
+}
+
+.publish-card-active {
+  background: rgba(120, 167, 255, 0.08);
+  border-color: rgba(120, 167, 255, 0.22);
+}
+
 .review-actions {
   align-items: end;
   display: grid;
@@ -725,6 +738,42 @@ select:focus {
 .callout-card {
   display: grid;
   gap: 6px;
+}
+
+.preview-meta,
+.preview-list-block,
+.preview-pane {
+  display: grid;
+  gap: 10px;
+}
+
+.preview-list {
+  display: grid;
+  gap: 8px;
+}
+
+.preview-list p {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin: 0;
+  padding: 10px 12px;
+}
+
+.markdown-preview {
+  background: rgba(11, 13, 17, 0.76);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  color: #d9e0ea;
+  font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  margin: 0;
+  max-height: 360px;
+  overflow: auto;
+  padding: 14px;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .quiet-card {

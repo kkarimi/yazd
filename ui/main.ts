@@ -40,6 +40,7 @@ interface ViewState {
   message: string;
   reviewState: AppReviewState;
   saving: boolean;
+  selectedPublishEntryId: string | null;
   validation: AppValidationResult | null;
 }
 
@@ -63,6 +64,7 @@ const state: ViewState = {
   message: "",
   reviewState: defaultAppReviewState(),
   saving: false,
+  selectedPublishEntryId: null,
   validation: null,
 };
 
@@ -510,32 +512,75 @@ function renderViewContent(
           <article class="pane-card side-card">
             <div class="card-header">
               <div>
-                <p class="section-kicker">Focus</p>
-                <h3>What this queue should optimize for</h3>
+                <p class="section-kicker">Draft preview</p>
+                <h3>${dashboard.draftPreview?.title ?? "Nothing to preview yet"}</h3>
               </div>
             </div>
             <div class="callout-card">
-              <p class="callout-title">Review before publish</p>
-              <p>Generated output should flow into approval before it reaches the vault. The UI should help users clear the next decision, not expose runtime internals.</p>
+              <p class="callout-title">${dashboard.draftPreview?.sourceTitle ?? "Awaiting source item"}</p>
+              <p>${dashboard.draftPreview?.summary ?? "When a source bundle is available, Yazd should show the draft itself here so approval is grounded in the actual output."}</p>
             </div>
-            <div class="mini-stat-list">
-              <article class="mini-stat">
-                <span>Recovery</span>
-                <strong>${dashboard.reviewItems.filter((item) => item.bucket === "recovery").length}</strong>
-              </article>
-              <article class="mini-stat">
-                <span>Approval</span>
-                <strong>${dashboard.reviewItems.filter((item) => item.bucket === "approval").length}</strong>
-              </article>
-              <article class="mini-stat">
-                <span>Publish</span>
-                <strong>${dashboard.reviewItems.filter((item) => item.bucket === "publish").length}</strong>
-              </article>
-            </div>
+            ${
+              dashboard.draftPreview
+                ? `
+                  <div class="preview-meta">
+                    <div class="mini-stat-list">
+                      <article class="mini-stat">
+                        <span>Decisions</span>
+                        <strong>${dashboard.draftPreview.decisions.length}</strong>
+                      </article>
+                      <article class="mini-stat">
+                        <span>Actions</span>
+                        <strong>${dashboard.draftPreview.actionItems.length}</strong>
+                      </article>
+                    </div>
+                    ${
+                      dashboard.draftPreview.decisions.length > 0
+                        ? `
+                          <section class="preview-list-block">
+                            <p class="section-kicker">Decisions</p>
+                            <div class="preview-list">
+                              ${dashboard.draftPreview.decisions.map((item) => `<p>${item}</p>`).join("")}
+                            </div>
+                          </section>
+                        `
+                        : ""
+                    }
+                    ${
+                      dashboard.draftPreview.actionItems.length > 0
+                        ? `
+                          <section class="preview-list-block">
+                            <p class="section-kicker">Action items</p>
+                            <div class="preview-list">
+                              ${dashboard.draftPreview.actionItems
+                                .map(
+                                  (item) => `
+                                    <p>${item.owner ? `${item.owner}: ` : ""}${item.title}${item.dueDate ? ` (${item.dueDate})` : ""}</p>
+                                  `,
+                                )
+                                .join("")}
+                            </div>
+                          </section>
+                        `
+                        : ""
+                    }
+                    <section class="preview-pane">
+                      <p class="section-kicker">Markdown</p>
+                      <pre class="markdown-preview">${escapeHtml(dashboard.draftPreview.markdown)}</pre>
+                    </section>
+                  </div>
+                `
+                : ""
+            }
           </article>
         </section>
       `;
     case "publish":
+      {
+        const selectedEntry =
+          dashboard.publishEntries.find((entry) => entry.artifactId === state.selectedPublishEntryId) ??
+          dashboard.publishEntries[0];
+
       return `
         <section class="view-grid detail-grid">
           <article class="pane-card">
@@ -553,13 +598,17 @@ function renderViewContent(
                     ${dashboard.publishEntries
                       .map(
                         (entry) => `
-                          <article class="publish-card">
+                          <button
+                            class="publish-card publish-card-button ${selectedEntry?.artifactId === entry.artifactId ? "publish-card-active" : ""}"
+                            data-publish-entry-id="${entry.artifactId}"
+                            type="button"
+                          >
                             <div>
                               <p class="item-meta">${entry.action} · ${entry.artifactKind}</p>
                               <h4>${entry.path}</h4>
                               <p>${entry.reason ?? ""}</p>
                             </div>
-                          </article>
+                          </button>
                         `,
                       )
                       .join("")}
@@ -572,18 +621,28 @@ function renderViewContent(
           <article class="pane-card side-card">
             <div class="card-header">
               <div>
-                <p class="section-kicker">Target</p>
-                <h3>Current output destination</h3>
+                <p class="section-kicker">Content preview</p>
+                <h3>${selectedEntry?.artifactKind ?? "Current output destination"}</h3>
               </div>
             </div>
             <div class="callout-card">
-              <p class="callout-title">${settings.knowledgeBaseKind === "obsidian-vault" ? "Obsidian vault" : "Folder target"}</p>
-              <p>${settings.knowledgeBasePath.trim() || "No destination selected yet."}</p>
+              <p class="callout-title">${selectedEntry?.path ?? (settings.knowledgeBaseKind === "obsidian-vault" ? "Obsidian vault" : "Folder target")}</p>
+              <p>${selectedEntry?.reason ?? (settings.knowledgeBasePath.trim() || "No destination selected yet.")}</p>
             </div>
-            <button class="toolbar-button full-width" data-view="settings" type="button">Adjust setup</button>
+            ${
+              selectedEntry
+                ? `
+                  <section class="preview-pane">
+                    <p class="section-kicker">File contents</p>
+                    <pre class="markdown-preview">${escapeHtml(selectedEntry.content)}</pre>
+                  </section>
+                `
+                : `<button class="toolbar-button full-width" data-view="settings" type="button">Adjust setup</button>`
+            }
           </article>
         </section>
       `;
+      }
     case "roadmap":
       return `
         <section class="view-grid detail-grid">
@@ -815,6 +874,7 @@ function wireEvents(): void {
   const knowledgeBasePathInput = document.querySelector<HTMLInputElement>('input[name="knowledgeBasePath"]');
   const granEndpointInput = document.querySelector<HTMLInputElement>('input[name="granEndpoint"]');
   const navButtons = document.querySelectorAll<HTMLButtonElement>("[data-view]");
+  const publishEntryButtons = document.querySelectorAll<HTMLButtonElement>("[data-publish-entry-id]");
   const reviewActionButtons = document.querySelectorAll<HTMLButtonElement>("[data-review-action]");
   const windowControlButtons = document.querySelectorAll<HTMLButtonElement>("[data-window-control]");
 
@@ -842,6 +902,16 @@ function wireEvents(): void {
       const itemId = button.dataset.reviewItemId;
       if (isReviewActionKind(kind) && itemId) {
         void handleReviewAction(kind, itemId);
+      }
+    });
+  });
+
+  publishEntryButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const artifactId = button.dataset.publishEntryId;
+      if (artifactId) {
+        state.selectedPublishEntryId = artifactId;
+        render();
       }
     });
   });
@@ -1111,6 +1181,10 @@ function escapeAttribute(value: string): string {
     .replaceAll(">", "&gt;");
 }
 
+function escapeHtml(value: string): string {
+  return escapeAttribute(value);
+}
+
 function readFormSettings(form: HTMLFormElement): AppSettings {
   const formData = new FormData(form);
   return {
@@ -1140,8 +1214,24 @@ async function refreshDashboard(
   }
 
   state.dashboard = dashboard;
+  state.selectedPublishEntryId = reconcileSelectedPublishEntryId(dashboard, state.selectedPublishEntryId);
   state.dashboardStatus = "ready";
   render();
+}
+
+function reconcileSelectedPublishEntryId(
+  dashboard: AppDashboard,
+  currentSelection: string | null,
+): string | null {
+  if (dashboard.publishEntries.length === 0) {
+    return null;
+  }
+
+  if (currentSelection && dashboard.publishEntries.some((entry) => entry.artifactId === currentSelection)) {
+    return currentSelection;
+  }
+
+  return dashboard.publishEntries[0]?.artifactId ?? null;
 }
 
 function iconHome(): string {
