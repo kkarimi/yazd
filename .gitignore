@@ -1,3 +1,5 @@
 node_modules/
 dist/
+dist-app/
 .DS_Store
+src-tauri/target/

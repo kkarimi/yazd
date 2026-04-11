@@ -1,0 +1,6 @@
+{
+  "identifier": "main-capability",
+  "description": "Capability for the main Yazd window",
+  "windows": ["main"],
+  "permissions": ["dialog:default"]
+}

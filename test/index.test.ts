@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { buildDashboard, type AppSettings } from "../src/app.ts";
 import {
   buildYazdApprovalWorkflowRunId,
   buildYazdWorkflowRunId,
@@ -477,5 +478,21 @@ describe("@kkarimi/yazd-core", () => {
       startedAt: "2026-04-10T00:00:00Z",
       status: "skipped",
     });
+  });
+
+  it("builds dashboard data through the plugin pipeline", async () => {
+    const settings: AppSettings = {
+      agentId: "pi",
+      granEndpoint: "",
+      knowledgeBaseKind: "obsidian-vault",
+      knowledgeBasePath: "/Users/nima/Documents/Vault",
+    };
+
+    const dashboard = await buildDashboard(settings);
+
+    expect(dashboard.publishEntries.length).toBeGreaterThan(0);
+    expect(dashboard.publishEntries[0]?.path).toContain("/Users/nima/Documents/Vault");
+    expect(dashboard.reviewItems.some((item) => item.bucket === "approval")).toBe(true);
+    expect(dashboard.reviewItems.some((item) => item.bucket === "publish")).toBe(true);
   });
 });

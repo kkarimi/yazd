@@ -24,23 +24,37 @@
     ".": {
       "types": "./dist/index.d.mts",
       "import": "./dist/index.mjs"
+    },
+    "./app": {
+      "types": "./dist/app.d.mts",
+      "import": "./dist/app.mjs"
     }
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
+    "app:build": "node scripts/app-build.mjs",
+    "app:dev": "node scripts/app-dev.mjs",
     "build": "vp pack",
     "check": "vp check",
     "prepare": "vp pack",
+    "tauri:build": "tauri build",
+    "tauri:dev": "tauri dev",
     "test": "vp test",
     "typecheck": "vp exec tsc --noEmit"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.10.1",
     "@types/node": "^25.5.2",
     "typescript": "^5.9.3",
+    "vite": "npm:@voidzero-dev/vite-plus-core@latest",
     "vite-plus": "0.1.15",
     "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.10.1",
+    "@tauri-apps/plugin-dialog": "^2.7.0"
   },
   "overrides": {
     "vite": "npm:@voidzero-dev/vite-plus-core@latest",
