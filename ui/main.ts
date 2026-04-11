@@ -1,5 +1,6 @@
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 import {
   agentOptions,
@@ -66,6 +67,8 @@ const state: ViewState = {
 };
 
 const isMacLike = /Mac|iPhone|iPad|iPod/.test(globalThis.navigator.userAgent);
+const hasCustomWindowControls = isTauri() && !isMacLike;
+const appWindow = isTauri() ? getCurrentWindow() : null;
 
 const viewMeta: Record<AppView, { description: string; title: string }> = {
   overview: {
@@ -317,6 +320,7 @@ function render(): void {
               ${state.dashboardStatus === "loading" ? "Syncing dashboard" : reviewLoad}
             </div>
             <button class="toolbar-button" data-view="settings" type="button">Open settings</button>
+            ${renderWindowControls()}
           </div>
         </header>
 
@@ -743,6 +747,7 @@ function wireEvents(): void {
   const granEndpointInput = document.querySelector<HTMLInputElement>('input[name="granEndpoint"]');
   const navButtons = document.querySelectorAll<HTMLButtonElement>("[data-view]");
   const reviewActionButtons = document.querySelectorAll<HTMLButtonElement>("[data-review-action]");
+  const windowControlButtons = document.querySelectorAll<HTMLButtonElement>("[data-window-control]");
 
   const syncDraftFromForm = () => {
     if (!form) {
@@ -768,6 +773,15 @@ function wireEvents(): void {
       const itemId = button.dataset.reviewItemId;
       if (isReviewActionKind(kind) && itemId) {
         void handleReviewAction(kind, itemId);
+      }
+    });
+  });
+
+  windowControlButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const control = button.dataset.windowControl;
+      if (control) {
+        void handleWindowControl(control);
       }
     });
   });
@@ -1103,6 +1117,69 @@ function iconSettings(): string {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="3.25" />
       <path d="m19.4 15-.8 1.4 1.1 1.9-1.9 1.9-1.9-1.1-1.4.8-.5 2.2H10l-.5-2.2-1.4-.8-1.9 1.1-1.9-1.9 1.1-1.9-.8-1.4L2.5 14v-4l2.1-.5.8-1.4-1.1-1.9 1.9-1.9 1.9 1.1 1.4-.8L10 2.5h4l.5 2.1 1.4.8 1.9-1.1 1.9 1.9-1.1 1.9.8 1.4 2.2.5v4Z" />
+    </svg>
+  `;
+}
+
+function renderWindowControls(): string {
+  if (!hasCustomWindowControls) {
+    return "";
+  }
+
+  return `
+    <div class="window-controls">
+      <button class="window-control-button" data-window-control="minimize" title="Minimize" type="button">
+        ${iconMinimize()}
+      </button>
+      <button class="window-control-button" data-window-control="toggle-maximize" title="Maximize" type="button">
+        ${iconMaximize()}
+      </button>
+      <button class="window-control-button window-control-close" data-window-control="close" title="Close" type="button">
+        ${iconClose()}
+      </button>
+    </div>
+  `;
+}
+
+async function handleWindowControl(control: string): Promise<void> {
+  if (!appWindow) {
+    return;
+  }
+
+  switch (control) {
+    case "minimize":
+      await appWindow.minimize();
+      break;
+    case "toggle-maximize":
+      await appWindow.toggleMaximize();
+      break;
+    case "close":
+      await appWindow.close();
+      break;
+  }
+}
+
+function iconMinimize(): string {
+  return `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+      <path d="M6 12h12" />
+    </svg>
+  `;
+}
+
+function iconMaximize(): string {
+  return `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="6" y="6" width="12" height="12" rx="1.5" />
+    </svg>
+  `;
+}
+
+function iconClose(): string {
+  return `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+      <path d="m7 7 10 10" />
+      <path d="m17 7-10 10" />
     </svg>
   `;
 }
