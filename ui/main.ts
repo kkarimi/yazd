@@ -48,6 +48,7 @@ interface ViewState {
 
 const SETTINGS_STORAGE_KEY = "yazd-preview-settings";
 const REVIEW_STATE_STORAGE_KEY = "yazd-preview-review-state";
+const SELECTED_SOURCE_ITEM_STORAGE_KEY = "yazd-selected-source-item";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 
@@ -109,6 +110,7 @@ async function init(): Promise<void> {
   state.bootstrap = await loadBootstrap();
   state.reviewState = state.bootstrap.reviewState;
   state.draftSettings = state.bootstrap.settings;
+  state.selectedSourceItemId = loadSelectedSourceItemId();
   state.validation = await validateKnowledgeBase(state.bootstrap.settings);
   state.message = "Local-first setup is ready.";
   await refreshDashboard(state.bootstrap.settings, state.reviewState, state.validation);
@@ -1502,6 +1504,7 @@ async function refreshDashboard(
   state.dashboard = dashboard;
   state.selectedPublishEntryId = reconcileSelectedPublishEntryId(dashboard, state.selectedPublishEntryId);
   state.selectedSourceItemId = reconcileSelectedSourceItemId(dashboard, state.selectedSourceItemId);
+  persistSelectedSourceItemId(state.selectedSourceItemId);
   state.dashboardStatus = "ready";
   render();
 }
@@ -1534,6 +1537,26 @@ function reconcileSelectedSourceItemId(
   }
 
   return dashboard.sourceOptions[0]?.id ?? null;
+}
+
+function loadSelectedSourceItemId(): string | null {
+  try {
+    return globalThis.localStorage.getItem(SELECTED_SOURCE_ITEM_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function persistSelectedSourceItemId(sourceItemId: string | null): void {
+  try {
+    if (!sourceItemId) {
+      globalThis.localStorage.removeItem(SELECTED_SOURCE_ITEM_STORAGE_KEY);
+      return;
+    }
+    globalThis.localStorage.setItem(SELECTED_SOURCE_ITEM_STORAGE_KEY, sourceItemId);
+  } catch {
+    // Ignore storage failures so the dashboard still works in restricted contexts.
+  }
 }
 
 function iconHome(): string {
