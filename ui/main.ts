@@ -210,6 +210,15 @@ async function publishEntries(entries: AppPublishEntry[]): Promise<PublishResult
   };
 }
 
+async function openPath(path: string): Promise<void> {
+  if (isTauri()) {
+    await invoke("open_path", { path });
+    return;
+  }
+
+  throw new Error("Opening written files is only available in the desktop app.");
+}
+
 function defaultSettings(): AppSettings {
   return {
     agentId: "pi",
@@ -787,7 +796,16 @@ function renderViewContent(
                   <section class="preview-list-block">
                     <p class="section-kicker">Written paths</p>
                     <div class="preview-list">
-                      ${dashboard.publishState.publishedPaths.map((path) => `<p>${path}</p>`).join("")}
+                      ${dashboard.publishState.publishedPaths
+                        .map(
+                          (path) => `
+                            <div class="path-row">
+                              <p>${path}</p>
+                              <button class="toolbar-button path-row-button" data-open-path="${escapeAttribute(path)}" type="button">Open</button>
+                            </div>
+                          `,
+                        )
+                        .join("")}
                     </div>
                   </section>
                 `
@@ -1057,6 +1075,7 @@ function wireEvents(): void {
   const granEndpointInput = document.querySelector<HTMLInputElement>('input[name="granEndpoint"]');
   const commandButtons = document.querySelectorAll<HTMLButtonElement>("[data-command]");
   const navButtons = document.querySelectorAll<HTMLButtonElement>("[data-view]");
+  const openPathButtons = document.querySelectorAll<HTMLButtonElement>("[data-open-path]");
   const publishEntryButtons = document.querySelectorAll<HTMLButtonElement>("[data-publish-entry-id]");
   const sourceItemButtons = document.querySelectorAll<HTMLButtonElement>("[data-source-item-id]");
   const reviewPreviewButtons = document.querySelectorAll<HTMLButtonElement>("[data-review-preview-mode]");
@@ -1106,6 +1125,15 @@ function wireEvents(): void {
       if (artifactId) {
         state.selectedPublishEntryId = artifactId;
         render();
+      }
+    });
+  });
+
+  openPathButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const path = button.dataset.openPath;
+      if (path) {
+        void handleOpenPath(path);
       }
     });
   });
@@ -1241,6 +1269,20 @@ async function refreshDashboardNow(): Promise<void> {
   try {
     await refreshDashboard(savedSettings(), state.reviewState, state.validation);
     state.message = "Dashboard refreshed.";
+  } catch (error) {
+    state.message = error instanceof Error ? error.message : String(error);
+  } finally {
+    render();
+  }
+}
+
+async function handleOpenPath(path: string): Promise<void> {
+  state.message = `Opening ${path}...`;
+  render();
+
+  try {
+    await openPath(path);
+    state.message = "Opened in the system file manager.";
   } catch (error) {
     state.message = error instanceof Error ? error.message : String(error);
   } finally {

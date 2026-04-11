@@ -829,6 +829,21 @@ select:focus {
   padding: 10px 12px;
 }
 
+.path-row {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.path-row p {
+  word-break: break-word;
+}
+
+.path-row-button {
+  min-height: 36px;
+}
+
 .publish-status-block {
   display: grid;
   gap: 12px;
@@ -1027,6 +1042,7 @@ select:focus {
 
   .field-row,
   .form-footer,
+  .path-row,
   .stack-item,
   .review-card,
   .mini-stat,

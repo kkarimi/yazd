@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, fs, path::PathBuf};
+use std::{collections::HashMap, fs, path::PathBuf, process::Command};
 use tauri::{AppHandle, Manager};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -243,12 +243,42 @@ fn publish_entries(entries: Vec<PublishEntryInput>) -> Result<PublishResult, Str
   })
 }
 
+#[tauri::command]
+fn open_path(path: String) -> Result<(), String> {
+  let target = PathBuf::from(path.trim());
+  if !target.exists() {
+    return Err("The selected path does not exist anymore.".into());
+  }
+
+  #[cfg(target_os = "macos")]
+  let status = Command::new("open").arg(&target).status();
+
+  #[cfg(target_os = "linux")]
+  let status = Command::new("xdg-open").arg(&target).status();
+
+  #[cfg(target_os = "windows")]
+  let status = Command::new("cmd")
+    .args(["/C", "start", "", &target.display().to_string()])
+    .status();
+
+  status
+    .map_err(|error| error.to_string())
+    .and_then(|status| {
+      if status.success() {
+        Ok(())
+      } else {
+        Err(format!("Failed to open {}.", target.display()))
+      }
+    })
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 fn main() {
   tauri::Builder::default()
     .plugin(tauri_plugin_dialog::init())
     .invoke_handler(tauri::generate_handler![
       load_bootstrap,
+      open_path,
       publish_entries,
       save_review_state,
       save_settings,
