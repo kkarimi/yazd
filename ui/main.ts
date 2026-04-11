@@ -38,6 +38,7 @@ interface ViewState {
   dashboardStatus: "idle" | "loading" | "ready";
   draftSettings: AppSettings;
   message: string;
+  reviewPreviewMode: "draft" | "source";
   reviewState: AppReviewState;
   saving: boolean;
   selectedPublishEntryId: string | null;
@@ -62,6 +63,7 @@ const state: ViewState = {
   dashboardStatus: "idle",
   draftSettings: defaultSettings(),
   message: "",
+  reviewPreviewMode: "draft",
   reviewState: defaultAppReviewState(),
   saving: false,
   selectedPublishEntryId: null,
@@ -512,61 +514,93 @@ function renderViewContent(
           <article class="pane-card side-card">
             <div class="card-header">
               <div>
-                <p class="section-kicker">Draft preview</p>
-                <h3>${dashboard.draftPreview?.title ?? "Nothing to preview yet"}</h3>
+                <p class="section-kicker">Review context</p>
+                <h3>${state.reviewPreviewMode === "source" ? dashboard.draftPreview?.sourceTitle ?? "Source bundle" : dashboard.draftPreview?.title ?? "Nothing to preview yet"}</h3>
               </div>
+              ${
+                dashboard.draftPreview
+                  ? `
+                    <div class="segmented-control" role="tablist" aria-label="Review preview mode">
+                      <button
+                        class="segmented-button ${state.reviewPreviewMode === "draft" ? "segmented-button-active" : ""}"
+                        data-review-preview-mode="draft"
+                        type="button"
+                      >
+                        Draft
+                      </button>
+                      <button
+                        class="segmented-button ${state.reviewPreviewMode === "source" ? "segmented-button-active" : ""}"
+                        data-review-preview-mode="source"
+                        type="button"
+                      >
+                        Source
+                      </button>
+                    </div>
+                  `
+                  : ""
+              }
             </div>
             <div class="callout-card">
-              <p class="callout-title">${dashboard.draftPreview?.sourceTitle ?? "Awaiting source item"}</p>
-              <p>${dashboard.draftPreview?.summary ?? "When a source bundle is available, Yazd should show the draft itself here so approval is grounded in the actual output."}</p>
+              <p class="callout-title">${state.reviewPreviewMode === "source" ? "Original source" : dashboard.draftPreview?.sourceTitle ?? "Awaiting source item"}</p>
+              <p>${
+                state.reviewPreviewMode === "source"
+                  ? "Compare the original meeting bundle with the generated draft before approving anything."
+                  : dashboard.draftPreview?.summary ?? "When a source bundle is available, Yazd should show the draft itself here so approval is grounded in the actual output."
+              }</p>
             </div>
             ${
               dashboard.draftPreview
                 ? `
                   <div class="preview-meta">
-                    <div class="mini-stat-list">
-                      <article class="mini-stat">
-                        <span>Decisions</span>
-                        <strong>${dashboard.draftPreview.decisions.length}</strong>
-                      </article>
-                      <article class="mini-stat">
-                        <span>Actions</span>
-                        <strong>${dashboard.draftPreview.actionItems.length}</strong>
-                      </article>
-                    </div>
                     ${
-                      dashboard.draftPreview.decisions.length > 0
+                      state.reviewPreviewMode === "draft"
                         ? `
-                          <section class="preview-list-block">
-                            <p class="section-kicker">Decisions</p>
-                            <div class="preview-list">
-                              ${dashboard.draftPreview.decisions.map((item) => `<p>${item}</p>`).join("")}
-                            </div>
-                          </section>
-                        `
-                        : ""
-                    }
-                    ${
-                      dashboard.draftPreview.actionItems.length > 0
-                        ? `
-                          <section class="preview-list-block">
-                            <p class="section-kicker">Action items</p>
-                            <div class="preview-list">
-                              ${dashboard.draftPreview.actionItems
-                                .map(
-                                  (item) => `
-                                    <p>${item.owner ? `${item.owner}: ` : ""}${item.title}${item.dueDate ? ` (${item.dueDate})` : ""}</p>
-                                  `,
-                                )
-                                .join("")}
-                            </div>
-                          </section>
+                          <div class="mini-stat-list">
+                            <article class="mini-stat">
+                              <span>Decisions</span>
+                              <strong>${dashboard.draftPreview.decisions.length}</strong>
+                            </article>
+                            <article class="mini-stat">
+                              <span>Actions</span>
+                              <strong>${dashboard.draftPreview.actionItems.length}</strong>
+                            </article>
+                          </div>
+                          ${
+                            dashboard.draftPreview.decisions.length > 0
+                              ? `
+                                <section class="preview-list-block">
+                                  <p class="section-kicker">Decisions</p>
+                                  <div class="preview-list">
+                                    ${dashboard.draftPreview.decisions.map((item) => `<p>${item}</p>`).join("")}
+                                  </div>
+                                </section>
+                              `
+                              : ""
+                          }
+                          ${
+                            dashboard.draftPreview.actionItems.length > 0
+                              ? `
+                                <section class="preview-list-block">
+                                  <p class="section-kicker">Action items</p>
+                                  <div class="preview-list">
+                                    ${dashboard.draftPreview.actionItems
+                                      .map(
+                                        (item) => `
+                                          <p>${item.owner ? `${item.owner}: ` : ""}${item.title}${item.dueDate ? ` (${item.dueDate})` : ""}</p>
+                                        `,
+                                      )
+                                      .join("")}
+                                  </div>
+                                </section>
+                              `
+                              : ""
+                          }
                         `
                         : ""
                     }
                     <section class="preview-pane">
-                      <p class="section-kicker">Markdown</p>
-                      <pre class="markdown-preview">${escapeHtml(dashboard.draftPreview.markdown)}</pre>
+                      <p class="section-kicker">${state.reviewPreviewMode === "source" ? "Transcript" : "Markdown"}</p>
+                      <pre class="markdown-preview">${escapeHtml(state.reviewPreviewMode === "source" ? dashboard.draftPreview.sourceMarkdown : dashboard.draftPreview.markdown)}</pre>
                     </section>
                   </div>
                 `
@@ -875,6 +909,7 @@ function wireEvents(): void {
   const granEndpointInput = document.querySelector<HTMLInputElement>('input[name="granEndpoint"]');
   const navButtons = document.querySelectorAll<HTMLButtonElement>("[data-view]");
   const publishEntryButtons = document.querySelectorAll<HTMLButtonElement>("[data-publish-entry-id]");
+  const reviewPreviewButtons = document.querySelectorAll<HTMLButtonElement>("[data-review-preview-mode]");
   const reviewActionButtons = document.querySelectorAll<HTMLButtonElement>("[data-review-action]");
   const windowControlButtons = document.querySelectorAll<HTMLButtonElement>("[data-window-control]");
 
@@ -911,6 +946,16 @@ function wireEvents(): void {
       const artifactId = button.dataset.publishEntryId;
       if (artifactId) {
         state.selectedPublishEntryId = artifactId;
+        render();
+      }
+    });
+  });
+
+  reviewPreviewButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const mode = button.dataset.reviewPreviewMode;
+      if (mode === "draft" || mode === "source") {
+        state.reviewPreviewMode = mode;
         render();
       }
     });

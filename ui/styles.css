@@ -708,6 +708,28 @@ select:focus {
   border-color: rgba(120, 167, 255, 0.22);
 }
 
+.segmented-control {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  display: inline-flex;
+  padding: 4px;
+}
+
+.segmented-button {
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--muted);
+  min-height: 30px;
+  padding: 0 12px;
+}
+
+.segmented-button-active {
+  background: rgba(120, 167, 255, 0.14);
+  color: #f3f5f8;
+}
+
 .review-actions {
   align-items: end;
   display: grid;

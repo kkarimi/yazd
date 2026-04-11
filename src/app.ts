@@ -109,6 +109,7 @@ export interface AppDraftPreview {
   }>;
   decisions: string[];
   markdown: string;
+  sourceMarkdown: string;
   sourceTitle: string;
   summary: string;
   title: string;
@@ -914,6 +915,7 @@ export async function buildDashboard(
       })),
       decisions: [...structured.decisions],
       markdown: structured.markdown,
+      sourceMarkdown: transcript,
       sourceTitle: sourceItem.title,
       summary: structured.summary ?? "Draft is ready for review before publishing.",
       title: structured.title,
