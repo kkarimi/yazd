@@ -335,6 +335,10 @@ summary {
   padding: 14px;
 }
 
+.workspace-open-button {
+  margin-top: 6px;
+}
+
 .workspace-path {
   font-size: 0.94rem;
   margin: 0;

@@ -316,6 +316,7 @@ function render(): void {
                   <div class="workspace-card">
                     <p class="workspace-path">${connectedTarget}</p>
                     <p class="workspace-meta">${agentOptions.find((option) => option.id === settings.agentId)?.label ?? "Unknown agent"}</p>
+                    <button class="toolbar-button workspace-open-button" data-open-path="${escapeAttribute(settings.knowledgeBasePath)}" type="button">Open target</button>
                   </div>
                 </section>
               `
@@ -778,6 +779,11 @@ function renderViewContent(
                   <strong>${dashboard.publishState.artifactCount}</strong>
                 </article>
               </div>
+              ${
+                settings.knowledgeBasePath.trim()
+                  ? `<button class="toolbar-button" data-open-path="${escapeAttribute(settings.knowledgeBasePath)}" type="button">Open target folder</button>`
+                  : ""
+              }
               <p class="publish-status-copy">${renderPublishStateDetail(dashboard)}</p>
             </section>
             ${
@@ -978,6 +984,11 @@ function renderSettingsView(
             <strong>${bootstrap.reviewStatePath}</strong>
           </article>
         </div>
+        ${
+          settings.knowledgeBasePath.trim()
+            ? `<button class="toolbar-button full-width" data-open-path="${escapeAttribute(settings.knowledgeBasePath)}" type="button">Open target folder</button>`
+            : ""
+        }
       </article>
     </section>
   `;
