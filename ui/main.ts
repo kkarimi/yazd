@@ -984,11 +984,15 @@ function renderSettingsView(
             <strong>${bootstrap.reviewStatePath}</strong>
           </article>
         </div>
-        ${
-          settings.knowledgeBasePath.trim()
-            ? `<button class="toolbar-button full-width" data-open-path="${escapeAttribute(settings.knowledgeBasePath)}" type="button">Open target folder</button>`
-            : ""
-        }
+        <div class="settings-actions">
+          ${
+            settings.knowledgeBasePath.trim()
+              ? `<button class="toolbar-button full-width" data-open-path="${escapeAttribute(settings.knowledgeBasePath)}" type="button">Open target folder</button>`
+              : ""
+          }
+          <button class="toolbar-button full-width" data-open-path="${escapeAttribute(bootstrap.configPath)}" type="button">Open config file</button>
+          <button class="toolbar-button full-width" data-open-path="${escapeAttribute(bootstrap.reviewStatePath)}" type="button">Open review state</button>
+        </div>
       </article>
     </section>
   `;
