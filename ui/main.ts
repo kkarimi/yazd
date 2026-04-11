@@ -458,6 +458,34 @@ function renderViewContent(
 
           ${
             settings.knowledgeBasePath.trim()
+              ? `
+                <article class="pane-card quiet-card">
+                  <div class="card-header">
+                    <div>
+                      <p class="section-kicker">Publish</p>
+                      <h3>${renderPublishStateTitle(dashboard)}</h3>
+                    </div>
+                  </div>
+                  <div class="callout-card">
+                    <p class="callout-title">${renderPublishStateLabel(dashboard)}</p>
+                    <p>${renderPublishStateDetail(dashboard)}</p>
+                  </div>
+                  ${
+                    dashboard.publishState.status === "published" && dashboard.publishState.publishedPaths.length > 0
+                      ? `
+                        <div class="preview-list compact-list">
+                          ${dashboard.publishState.publishedPaths.slice(0, 2).map((path) => `<p>${path}</p>`).join("")}
+                        </div>
+                      `
+                      : ""
+                  }
+                </article>
+              `
+              : ""
+          }
+
+          ${
+            settings.knowledgeBasePath.trim()
               ? ""
               : `
                 <article class="pane-card quiet-card">
@@ -663,6 +691,19 @@ function renderViewContent(
               <p class="callout-title">${selectedEntry?.path ?? (settings.knowledgeBaseKind === "obsidian-vault" ? "Obsidian vault" : "Folder target")}</p>
               <p>${selectedEntry?.reason ?? (settings.knowledgeBasePath.trim() || "No destination selected yet.")}</p>
             </div>
+            <section class="publish-status-block">
+              <div class="mini-stat-list">
+                <article class="mini-stat">
+                  <span>Status</span>
+                  <strong>${renderPublishStateLabel(dashboard)}</strong>
+                </article>
+                <article class="mini-stat">
+                  <span>Artifacts</span>
+                  <strong>${dashboard.publishState.artifactCount}</strong>
+                </article>
+              </div>
+              <p class="publish-status-copy">${renderPublishStateDetail(dashboard)}</p>
+            </section>
             ${
               selectedEntry
                 ? `
@@ -672,6 +713,18 @@ function renderViewContent(
                   </section>
                 `
                 : `<button class="toolbar-button full-width" data-view="settings" type="button">Adjust setup</button>`
+            }
+            ${
+              dashboard.publishState.status === "published" && dashboard.publishState.publishedPaths.length > 0
+                ? `
+                  <section class="preview-list-block">
+                    <p class="section-kicker">Written paths</p>
+                    <div class="preview-list">
+                      ${dashboard.publishState.publishedPaths.map((path) => `<p>${path}</p>`).join("")}
+                    </div>
+                  </section>
+                `
+                : ""
             }
           </article>
         </section>
@@ -1228,6 +1281,61 @@ function escapeAttribute(value: string): string {
 
 function escapeHtml(value: string): string {
   return escapeAttribute(value);
+}
+
+function renderPublishStateTitle(dashboard: AppDashboard): string {
+  switch (dashboard.publishState.status) {
+    case "published":
+      return "Published to knowledge base";
+    case "ready":
+      return "Ready to publish";
+    case "awaiting-approval":
+      return "Awaiting approval";
+    case "unavailable":
+      return "Publish not ready";
+  }
+}
+
+function renderPublishStateLabel(dashboard: AppDashboard): string {
+  switch (dashboard.publishState.status) {
+    case "published":
+      return dashboard.publishState.publishedAt
+        ? `Published ${formatTimestamp(dashboard.publishState.publishedAt)}`
+        : "Published";
+    case "ready":
+      return `${dashboard.publishState.artifactCount} files ready`;
+    case "awaiting-approval":
+      return "Waiting for approval";
+    case "unavailable":
+      return "No publish target yet";
+  }
+}
+
+function renderPublishStateDetail(dashboard: AppDashboard): string {
+  switch (dashboard.publishState.status) {
+    case "published":
+      return dashboard.publishState.publishedPaths.length > 0
+        ? `Yazd last wrote ${dashboard.publishState.publishedPaths.length} files for ${dashboard.publishState.title ?? "this draft"}.`
+        : "The publish step completed, but no written paths were recorded.";
+    case "ready":
+      return `The publish plan is ready and will write ${dashboard.publishState.artifactCount} files once approved.`;
+    case "awaiting-approval":
+      return "Approve the draft first so the publish plan can be materialized intentionally.";
+    case "unavailable":
+      return "Pick a vault or folder before Yazd can turn review into publish output.";
+  }
+}
+
+function formatTimestamp(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
 }
 
 function readFormSettings(form: HTMLFormElement): AppSettings {

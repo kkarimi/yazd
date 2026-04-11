@@ -115,9 +115,18 @@ export interface AppDraftPreview {
   title: string;
 }
 
+export interface AppPublishState {
+  artifactCount: number;
+  publishedAt?: string;
+  publishedPaths: string[];
+  status: "awaiting-approval" | "published" | "ready" | "unavailable";
+  title?: string;
+}
+
 export interface AppDashboard {
   draftPreview?: AppDraftPreview;
   publishEntries: AppPublishEntry[];
+  publishState: AppPublishState;
   reviewItems: AppReviewQueueItem[];
   runtime: AppRuntimeStatus;
   todoItems: AppTodoItem[];
@@ -859,6 +868,11 @@ export async function buildDashboard(
     knowledgeBasePlugins: [createKnowledgeBasePlugin("folder"), createKnowledgeBasePlugin("obsidian-vault")],
     sourcePlugins: [createGranSourcePlugin(granEndpoint)],
   });
+  let publishState: AppPublishState = {
+    artifactCount: 0,
+    publishedPaths: [],
+    status: "unavailable",
+  };
 
   const runtimeInfo = await readGranRuntimeInfo(granEndpoint);
 
@@ -1060,6 +1074,13 @@ export async function buildDashboard(
           : publishedRecord
             ? "published"
             : "ready";
+      publishState = {
+        artifactCount: publishEntries.length,
+        publishedAt: publishedRecord?.publishedAt,
+        publishedPaths: publishedRecord ? [...publishedRecord.paths] : [],
+        status: publishStatus,
+        title: structured.title,
+      };
 
       reviewItems.push(
         withActions(
@@ -1140,6 +1161,7 @@ export async function buildDashboard(
     return {
       draftPreview,
       publishEntries,
+      publishState,
       reviewItems: sortYazdReviewItems(reviewItems) as AppReviewQueueItem[],
       runtime: createRuntimeStatus(granEndpoint, runtimeInfo),
       todoItems: sortTodo(roadmap),
@@ -1182,6 +1204,7 @@ export async function buildDashboard(
     return {
       draftPreview: undefined,
       publishEntries: [],
+      publishState,
       reviewItems: sortYazdReviewItems(reviewItems) as AppReviewQueueItem[],
       runtime: createRuntimeStatus(granEndpoint, runtimeInfo, message),
       todoItems: sortTodo(roadmap),

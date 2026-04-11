@@ -494,5 +494,37 @@ describe("@kkarimi/yazd-core", () => {
     expect(dashboard.publishEntries[0]?.path).toContain("/Users/nima/Documents/Vault");
     expect(dashboard.reviewItems.some((item) => item.bucket === "approval")).toBe(true);
     expect(dashboard.reviewItems.some((item) => item.bucket === "publish")).toBe(true);
+    expect(dashboard.publishState.status).toBe("awaiting-approval");
+  });
+
+  it("surfaces published paths in dashboard publish state", async () => {
+    const settings: AppSettings = {
+      agentId: "pi",
+      granEndpoint: "",
+      knowledgeBaseKind: "obsidian-vault",
+      knowledgeBasePath: "/Users/nima/Documents/Vault",
+    };
+
+    const dashboard = await buildDashboard(settings, {
+      itemDecisions: {
+        "approval:gran:weekly-sync-2026-04-11": {
+          actedAt: "2026-04-11T10:00:00Z",
+          decision: "approved",
+        },
+      },
+      publishedItems: {
+        "publish:gran:weekly-sync-2026-04-11": {
+          paths: [
+            "/Users/nima/Documents/Vault/Meetings/weekly-sync-briefing.md",
+            "/Users/nima/Documents/Vault/Decisions/weekly-sync-briefing.md",
+          ],
+          publishedAt: "2026-04-11T10:05:00Z",
+        },
+      },
+    });
+
+    expect(dashboard.publishState.status).toBe("published");
+    expect(dashboard.publishState.publishedPaths).toHaveLength(2);
+    expect(dashboard.publishState.publishedAt).toBe("2026-04-11T10:05:00Z");
   });
 });

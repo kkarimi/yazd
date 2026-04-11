@@ -774,12 +774,27 @@ select:focus {
   gap: 8px;
 }
 
+.compact-list p {
+  font-size: 0.8rem;
+  padding: 8px 10px;
+}
+
 .preview-list p {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--line);
   border-radius: 12px;
   margin: 0;
   padding: 10px 12px;
+}
+
+.publish-status-block {
+  display: grid;
+  gap: 12px;
+}
+
+.publish-status-copy {
+  color: var(--muted);
+  margin: 0;
 }
 
 .markdown-preview {
