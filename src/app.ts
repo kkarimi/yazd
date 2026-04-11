@@ -135,6 +135,7 @@ export interface AppSourceState {
   status: "runtime" | "sample";
   title: string;
   updatedAt?: string;
+  url?: string;
 }
 
 export interface AppSourceOption {
@@ -142,6 +143,7 @@ export interface AppSourceOption {
   summary?: string;
   title: string;
   updatedAt?: string;
+  url?: string;
 }
 
 export interface AppDashboard {
@@ -1003,6 +1005,7 @@ export async function buildDashboard(
       summary: item.summary,
       title: item.title,
       updatedAt: item.updatedAt,
+      url: item.url && /^https?:\/\//.test(item.url) ? item.url : undefined,
     }));
     activityItems = buildActivityItems(reviewState, sourceOptions);
     const sourceItem = listResult.items.find((item) => item.id === selectedSourceItemId) ?? listResult.items[0];
@@ -1020,6 +1023,7 @@ export async function buildDashboard(
       status: granEndpoint ? "runtime" : "sample",
       title: sourceItem.title,
       updatedAt: sourceItem.updatedAt,
+      url: fetched.item.url && /^https?:\/\//.test(fetched.item.url) ? fetched.item.url : undefined,
     };
     const agentResult = await agentPlugin.run({
       attachments: [

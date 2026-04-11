@@ -216,7 +216,7 @@ async function openPath(path: string): Promise<void> {
     return;
   }
 
-  throw new Error("Opening written files is only available in the desktop app.");
+  throw new Error("Opening local paths and source links is only available in the desktop app.");
 }
 
 function defaultSettings(): AppSettings {
@@ -487,6 +487,11 @@ function renderViewContent(
                     <p class="callout-title">${dashboard.sourceState?.status === "runtime" ? "Gran runtime" : "Built-in sample"}</p>
                     <p>${dashboard.sourceState?.detail ?? "The dashboard could not load a source item."}</p>
                   </div>
+                  ${
+                    dashboard.sourceState?.url
+                      ? `<button class="toolbar-button" data-open-path="${escapeAttribute(dashboard.sourceState.url)}" type="button">Open source</button>`
+                      : ""
+                  }
                   ${renderSourceSelector(dashboard)}
                   ${
                     dashboard.sourceState?.updatedAt
@@ -652,6 +657,11 @@ function renderViewContent(
                   : dashboard.draftPreview?.summary ?? "When a source bundle is available, Yazd should show the draft itself here so approval is grounded in the actual output."
               }</p>
             </div>
+            ${
+              state.reviewPreviewMode === "source" && dashboard.sourceState?.url
+                ? `<button class="toolbar-button" data-open-path="${escapeAttribute(dashboard.sourceState.url)}" type="button">Open source</button>`
+                : ""
+            }
             ${renderSourceSelector(dashboard)}
             ${
               dashboard.draftPreview

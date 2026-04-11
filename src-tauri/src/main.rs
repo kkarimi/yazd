@@ -245,20 +245,23 @@ fn publish_entries(entries: Vec<PublishEntryInput>) -> Result<PublishResult, Str
 
 #[tauri::command]
 fn open_path(path: String) -> Result<(), String> {
-  let target = PathBuf::from(path.trim());
-  if !target.exists() {
+  let trimmed = path.trim();
+  let is_web_url = trimmed.starts_with("http://") || trimmed.starts_with("https://");
+  let target = PathBuf::from(trimmed);
+
+  if !is_web_url && !target.exists() {
     return Err("The selected path does not exist anymore.".into());
   }
 
   #[cfg(target_os = "macos")]
-  let status = Command::new("open").arg(&target).status();
+  let status = Command::new("open").arg(trimmed).status();
 
   #[cfg(target_os = "linux")]
-  let status = Command::new("xdg-open").arg(&target).status();
+  let status = Command::new("xdg-open").arg(trimmed).status();
 
   #[cfg(target_os = "windows")]
   let status = Command::new("cmd")
-    .args(["/C", "start", "", &target.display().to_string()])
+    .args(["/C", "start", "", trimmed])
     .status();
 
   status
@@ -267,7 +270,7 @@ fn open_path(path: String) -> Result<(), String> {
       if status.success() {
         Ok(())
       } else {
-        Err(format!("Failed to open {}.", target.display()))
+        Err(format!("Failed to open {}.", trimmed))
       }
     })
 }
