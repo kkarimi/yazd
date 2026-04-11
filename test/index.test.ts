@@ -498,6 +498,27 @@ describe("@kkarimi/yazd-core", () => {
     expect(dashboard.sourceState?.status).toBe("sample");
     expect(dashboard.sourceState?.title).toBe("Weekly Sync");
     expect(dashboard.sourceOptions[0]?.id).toBe("gran:weekly-sync-2026-04-11");
+    expect(dashboard.sourceOptions.length).toBeGreaterThan(1);
+    expect(dashboard.draftPreview?.title).toBe("Weekly Sync Briefing");
+  });
+
+  it("builds the dashboard for an explicitly selected sample source", async () => {
+    const settings: AppSettings = {
+      agentId: "pi",
+      granEndpoint: "",
+      knowledgeBaseKind: "obsidian-vault",
+      knowledgeBasePath: "/Users/nima/Documents/Vault",
+    };
+
+    const dashboard = await buildDashboard(
+      settings,
+      undefined,
+      undefined,
+      "gran:product-review-2026-04-10",
+    );
+
+    expect(dashboard.sourceState?.title).toBe("Product Review");
+    expect(dashboard.draftPreview?.title).toBe("Product Review Briefing");
   });
 
   it("surfaces published paths in dashboard publish state", async () => {

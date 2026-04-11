@@ -230,9 +230,10 @@ const roadmap: AppTodoItem[] = [
   },
 ];
 
-const sampleMeeting = {
-  id: "gran:weekly-sync-2026-04-11",
-  markdown: `# Weekly Sync
+const sampleMeetings = [
+  {
+    id: "gran:weekly-sync-2026-04-11",
+    markdown: `# Weekly Sync
 
 Nima: The first Tauri shell is running, but the landing experience should feel calmer.
 Sarah: The first thing users should do is connect the vault and then review the next useful draft.
@@ -243,9 +244,38 @@ Action: Nima to replace mocked dashboard data with plugin-backed flows by Tuesda
 Action: PI Agent to generate a tighter approval summary for the weekly sync bundle by Wednesday.
 Action: Sarah to validate the Obsidian publish plan shape against a real vault this week.
 `,
-  title: "Weekly Sync",
-  updatedAt: "2026-04-11T09:00:00Z",
-};
+    title: "Weekly Sync",
+    updatedAt: "2026-04-11T09:00:00Z",
+  },
+  {
+    id: "gran:product-review-2026-04-10",
+    markdown: `# Product Review
+
+Nima: The first-run flow feels calmer now, but source selection still needs to feel intentional.
+Sarah: The app should help users decide what to review next instead of assuming the newest meeting is always right.
+Decision: Add a recent source selector once the shell stays quiet by default.
+Highlight: The app should make source provenance obvious without surfacing runtime internals.
+Action: Nima to thread selected source identity through the dashboard this week.
+Action: Sarah to review whether published paths should be directly openable from the app.
+`,
+    title: "Product Review",
+    updatedAt: "2026-04-10T15:30:00Z",
+  },
+  {
+    id: "gran:research-standup-2026-04-09",
+    markdown: `# Research Standup
+
+Nima: Gran should stay a boring local runtime even as Yazd becomes more capable.
+Sarah: The publish flow is clearer when users can inspect both the source and the generated draft in one place.
+Decision: Keep source sync outside Yazd and keep workflow review inside Yazd.
+Highlight: A minimal desktop shell can still feel powerful if it preserves context between actions.
+Action: PI Agent to tighten the publish-ready note structure for research standups.
+Action: Nima to surface recent activity so the app remembers what happened last.
+`,
+    title: "Research Standup",
+    updatedAt: "2026-04-09T11:15:00Z",
+  },
+] as const;
 
 interface GranRuntimeInfo {
   detail: string;
@@ -284,6 +314,10 @@ function statusOrder(status: TodoStatus): number {
     case "done":
       return 2;
   }
+}
+
+function findSampleMeeting(id: string) {
+  return sampleMeetings.find((meeting) => meeting.id === id) ?? sampleMeetings[0];
 }
 
 export function defaultAppReviewState(): AppReviewState {
@@ -535,17 +569,18 @@ function createGranSourcePlugin(granEndpoint: string): YazdSourcePlugin {
     },
     async fetch(input) {
       if (!granEndpoint) {
+        const meeting = findSampleMeeting(input.id);
         return {
           item: {
-            id: input.id,
+            id: meeting.id,
             kind: "meeting",
             summary: "Loaded from the built-in sample source until Gran is configured.",
-            title: sampleMeeting.title,
-            updatedAt: sampleMeeting.updatedAt,
-            url: "local://gran/sample-meeting",
+            title: meeting.title,
+            updatedAt: meeting.updatedAt,
+            url: `local://gran/${meeting.id}`,
           },
-          markdown: sampleMeeting.markdown,
-          text: sampleMeeting.markdown,
+          markdown: meeting.markdown,
+          text: meeting.markdown,
         };
       }
 
@@ -566,16 +601,16 @@ function createGranSourcePlugin(granEndpoint: string): YazdSourcePlugin {
     async list(input) {
       if (!granEndpoint) {
         return {
-          items: [
-            {
-              id: sampleMeeting.id,
+          items: sampleMeetings
+            .slice(0, input?.limit ?? 5)
+            .map((meeting) => ({
+              id: meeting.id,
               kind: "meeting",
               summary: "A built-in meeting bundle used until a Gran runtime is connected.",
-              title: sampleMeeting.title,
-              updatedAt: sampleMeeting.updatedAt,
-              url: "local://gran/sample-meeting",
-            },
-          ],
+              title: meeting.title,
+              updatedAt: meeting.updatedAt,
+              url: `local://gran/${meeting.id}`,
+            })),
         };
       }
 
@@ -683,7 +718,11 @@ function createPiAgentPlugin(): YazdAgentPlugin {
   return {
     async run(task: YazdAgentTask) {
       const transcript = task.attachments?.find((attachment) => attachment.text)?.text ?? task.prompt;
-      const structured = structuredFallback("Weekly Sync Briefing", transcript);
+      const sourceLabel = task.attachments?.find((attachment) => attachment.label)?.label?.replace(/ transcript$/i, "").trim();
+      const structured = structuredFallback(
+        sourceLabel ? `${sourceLabel} Briefing` : "Meeting Briefing",
+        transcript,
+      );
 
       return {
         markdown: structured.markdown,
