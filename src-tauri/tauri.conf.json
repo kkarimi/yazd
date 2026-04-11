@@ -15,8 +15,17 @@
     },
     "windows": [
       {
+        "acceptFirstMouse": true,
+        "decorations": true,
+        "hiddenTitle": true,
         "label": "main",
         "title": "Yazd",
+        "titleBarStyle": "Overlay",
+        "trafficLightPosition": {
+          "x": 18,
+          "y": 20
+        },
+        "theme": "Dark",
         "width": 1320,
         "height": 860,
         "minWidth": 980,

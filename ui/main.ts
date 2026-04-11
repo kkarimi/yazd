@@ -65,6 +65,8 @@ const state: ViewState = {
   validation: null,
 };
 
+const isMacLike = /Mac|iPhone|iPad|iPod/.test(globalThis.navigator.userAgent);
+
 const viewMeta: Record<AppView, { description: string; title: string }> = {
   overview: {
     description: "See the current queue, target, and runtime posture in one place.",
@@ -230,14 +232,9 @@ function render(): void {
   const primaryActionView: AppView = settings.knowledgeBasePath.trim() ? "review" : "settings";
 
   app.innerHTML = `
-    <main class="app-shell">
+    <main class="app-shell ${isMacLike ? "platform-macos" : ""}">
       <aside class="sidebar">
         <div class="sidebar-top">
-          <div class="traffic-lights" aria-hidden="true">
-            <span class="traffic red"></span>
-            <span class="traffic amber"></span>
-            <span class="traffic green"></span>
-          </div>
           <section class="brand-block">
             <p class="brand-eyebrow">Yazd</p>
             <h1>Knowledge automation</h1>
@@ -304,10 +301,15 @@ function render(): void {
 
       <section class="main-pane">
         <header class="topbar">
-          <div>
+          <div class="topbar-main">
+            <div class="drag-strip" data-tauri-drag-region>
+              <span class="window-title">Yazd</span>
+            </div>
+            <div>
             <p class="topbar-eyebrow">${meta.title}</p>
             <h2>${meta.title}</h2>
             <p class="topbar-copy">${meta.description}</p>
+            </div>
           </div>
           <div class="topbar-actions">
             <div class="target-chip">${state.dashboardStatus === "loading" ? "Refreshing..." : connectedTarget}</div>

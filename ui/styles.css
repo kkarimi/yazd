@@ -90,36 +90,15 @@ summary {
   padding: 18px 16px 16px;
 }
 
+.platform-macos .sidebar {
+  padding-top: 30px;
+}
+
 .sidebar-top,
 .sidebar-middle,
 .sidebar-bottom {
   display: grid;
   gap: 16px;
-}
-
-.traffic-lights {
-  display: flex;
-  gap: 8px;
-  padding: 4px 2px;
-}
-
-.traffic {
-  border-radius: 999px;
-  display: inline-flex;
-  height: 11px;
-  width: 11px;
-}
-
-.traffic.red {
-  background: #ff5f57;
-}
-
-.traffic.amber {
-  background: #febc2e;
-}
-
-.traffic.green {
-  background: #28c840;
 }
 
 .brand-block {
@@ -381,6 +360,31 @@ summary {
   gap: 20px;
   justify-content: space-between;
   padding: 28px 30px 22px;
+}
+
+.platform-macos .topbar {
+  padding-top: 12px;
+}
+
+.topbar-main {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.drag-strip {
+  align-items: center;
+  display: flex;
+  min-height: 32px;
+  padding-left: 84px;
+  width: 100%;
+}
+
+.window-title {
+  color: var(--muted-soft);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 .topbar h2 {
@@ -788,6 +792,10 @@ select:focus {
     display: grid;
   }
 
+  .drag-strip {
+    padding-left: 76px;
+  }
+
   .topbar-actions {
     flex-wrap: wrap;
   }
@@ -818,6 +826,10 @@ select:focus {
   .content-pane {
     padding-left: 18px;
     padding-right: 18px;
+  }
+
+  .drag-strip {
+    padding-left: 70px;
   }
 
   .sidebar {
