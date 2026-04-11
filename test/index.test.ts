@@ -497,6 +497,7 @@ describe("@kkarimi/yazd-core", () => {
     expect(dashboard.publishState.status).toBe("awaiting-approval");
     expect(dashboard.sourceState?.status).toBe("sample");
     expect(dashboard.sourceState?.title).toBe("Weekly Sync");
+    expect(dashboard.sourceOptions[0]?.id).toBe("gran:weekly-sync-2026-04-11");
   });
 
   it("surfaces published paths in dashboard publish state", async () => {

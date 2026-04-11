@@ -137,6 +137,13 @@ export interface AppSourceState {
   updatedAt?: string;
 }
 
+export interface AppSourceOption {
+  id: string;
+  summary?: string;
+  title: string;
+  updatedAt?: string;
+}
+
 export interface AppDashboard {
   activityItems: AppActivityItem[];
   draftPreview?: AppDraftPreview;
@@ -144,6 +151,7 @@ export interface AppDashboard {
   publishState: AppPublishState;
   reviewItems: AppReviewQueueItem[];
   runtime: AppRuntimeStatus;
+  sourceOptions: AppSourceOption[];
   sourceState?: AppSourceState;
   todoItems: AppTodoItem[];
   validation?: AppValidationResult;
@@ -875,6 +883,7 @@ export async function buildDashboard(
   settings: AppSettings,
   reviewState: AppReviewState = defaultAppReviewState(),
   validation?: AppValidationResult,
+  selectedSourceItemId?: string,
 ): Promise<AppDashboard> {
   const granEndpoint = settings.granEndpoint.trim();
   const knowledgeBasePath = settings.knowledgeBasePath.trim();
@@ -890,6 +899,7 @@ export async function buildDashboard(
     publishedPaths: [],
     status: "unavailable",
   };
+  let sourceOptions: AppSourceOption[] = [];
   let sourceState: AppSourceState | undefined;
 
   const runtimeInfo = await readGranRuntimeInfo(granEndpoint);
@@ -905,8 +915,14 @@ export async function buildDashboard(
       throw new Error("The dashboard runtime is missing its source or agent plugin.");
     }
 
-    const listResult = await sourcePlugin.list({ limit: 1 });
-    const sourceItem = listResult.items[0];
+    const listResult = await sourcePlugin.list({ limit: 5 });
+    sourceOptions = listResult.items.map((item) => ({
+      id: item.id,
+      summary: item.summary,
+      title: item.title,
+      updatedAt: item.updatedAt,
+    }));
+    const sourceItem = listResult.items.find((item) => item.id === selectedSourceItemId) ?? listResult.items[0];
     if (!sourceItem) {
       throw new Error("No source items were returned by the current source plugin.");
     }
@@ -1214,6 +1230,7 @@ export async function buildDashboard(
       publishState,
       reviewItems: sortYazdReviewItems(reviewItems) as AppReviewQueueItem[],
       runtime: createRuntimeStatus(granEndpoint, runtimeInfo),
+      sourceOptions,
       sourceState,
       todoItems: sortTodo(roadmap),
       validation,
@@ -1259,6 +1276,7 @@ export async function buildDashboard(
       publishState,
       reviewItems: sortYazdReviewItems(reviewItems) as AppReviewQueueItem[],
       runtime: createRuntimeStatus(granEndpoint, runtimeInfo, message),
+      sourceOptions,
       sourceState,
       todoItems: sortTodo(roadmap),
       validation,

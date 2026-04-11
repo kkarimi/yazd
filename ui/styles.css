@@ -730,6 +730,39 @@ select:focus {
   color: #f3f5f8;
 }
 
+.source-selector,
+.source-selector-list {
+  display: grid;
+  gap: 8px;
+}
+
+.source-selector-button {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: inherit;
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.source-selector-button-active {
+  background: rgba(120, 167, 255, 0.08);
+  border-color: rgba(120, 167, 255, 0.22);
+}
+
+.source-selector-title {
+  color: #f3f5f8;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.source-selector-meta {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
 .review-actions {
   align-items: end;
   display: grid;

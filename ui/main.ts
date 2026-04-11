@@ -42,6 +42,7 @@ interface ViewState {
   reviewState: AppReviewState;
   saving: boolean;
   selectedPublishEntryId: string | null;
+  selectedSourceItemId: string | null;
   validation: AppValidationResult | null;
 }
 
@@ -67,6 +68,7 @@ const state: ViewState = {
   reviewState: defaultAppReviewState(),
   saving: false,
   selectedPublishEntryId: null,
+  selectedSourceItemId: null,
   validation: null,
 };
 
@@ -473,6 +475,7 @@ function renderViewContent(
                     <p class="callout-title">${dashboard.sourceState?.status === "runtime" ? "Gran runtime" : "Built-in sample"}</p>
                     <p>${dashboard.sourceState?.detail ?? "The dashboard could not load a source item."}</p>
                   </div>
+                  ${renderSourceSelector(dashboard)}
                   ${
                     dashboard.sourceState?.updatedAt
                       ? `<p class="muted">Updated ${formatTimestamp(dashboard.sourceState.updatedAt)}</p>`
@@ -637,6 +640,7 @@ function renderViewContent(
                   : dashboard.draftPreview?.summary ?? "When a source bundle is available, Yazd should show the draft itself here so approval is grounded in the actual output."
               }</p>
             </div>
+            ${renderSourceSelector(dashboard)}
             ${
               dashboard.draftPreview
                 ? `
@@ -984,6 +988,34 @@ function renderValidationBlock(validation: AppValidationResult | null): string {
   `;
 }
 
+function renderSourceSelector(dashboard: AppDashboard): string {
+  if (dashboard.sourceOptions.length <= 1) {
+    return "";
+  }
+
+  return `
+    <section class="source-selector">
+      <p class="section-kicker">Recent sources</p>
+      <div class="source-selector-list">
+        ${dashboard.sourceOptions
+          .map(
+            (item) => `
+              <button
+                class="source-selector-button ${state.selectedSourceItemId === item.id ? "source-selector-button-active" : ""}"
+                data-source-item-id="${item.id}"
+                type="button"
+              >
+                <span class="source-selector-title">${item.title}</span>
+                <span class="source-selector-meta">${item.updatedAt ? formatTimestamp(item.updatedAt) : item.summary ?? "Recent source item"}</span>
+              </button>
+            `,
+          )
+          .join("")}
+      </div>
+    </section>
+  `;
+}
+
 function renderActionButtons(actions: readonly AppReviewAction[]): string {
   if (actions.length === 0) {
     return `<span class="action-hint">No actions</span>`;
@@ -1024,6 +1056,7 @@ function wireEvents(): void {
   const commandButtons = document.querySelectorAll<HTMLButtonElement>("[data-command]");
   const navButtons = document.querySelectorAll<HTMLButtonElement>("[data-view]");
   const publishEntryButtons = document.querySelectorAll<HTMLButtonElement>("[data-publish-entry-id]");
+  const sourceItemButtons = document.querySelectorAll<HTMLButtonElement>("[data-source-item-id]");
   const reviewPreviewButtons = document.querySelectorAll<HTMLButtonElement>("[data-review-preview-mode]");
   const reviewActionButtons = document.querySelectorAll<HTMLButtonElement>("[data-review-action]");
   const windowControlButtons = document.querySelectorAll<HTMLButtonElement>("[data-window-control]");
@@ -1071,6 +1104,16 @@ function wireEvents(): void {
       if (artifactId) {
         state.selectedPublishEntryId = artifactId;
         render();
+      }
+    });
+  });
+
+  sourceItemButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const sourceItemId = button.dataset.sourceItemId;
+      if (sourceItemId) {
+        state.selectedSourceItemId = sourceItemId;
+        void refreshDashboardNow();
       }
     });
   });
@@ -1446,13 +1489,19 @@ async function refreshDashboard(
   state.dashboardStatus = "loading";
   render();
 
-  const dashboard = await buildDashboard(settings, reviewState, validation ?? undefined);
+  const dashboard = await buildDashboard(
+    settings,
+    reviewState,
+    validation ?? undefined,
+    state.selectedSourceItemId ?? undefined,
+  );
   if (requestId !== state.dashboardRequestId) {
     return;
   }
 
   state.dashboard = dashboard;
   state.selectedPublishEntryId = reconcileSelectedPublishEntryId(dashboard, state.selectedPublishEntryId);
+  state.selectedSourceItemId = reconcileSelectedSourceItemId(dashboard, state.selectedSourceItemId);
   state.dashboardStatus = "ready";
   render();
 }
@@ -1470,6 +1519,21 @@ function reconcileSelectedPublishEntryId(
   }
 
   return dashboard.publishEntries[0]?.artifactId ?? null;
+}
+
+function reconcileSelectedSourceItemId(
+  dashboard: AppDashboard,
+  currentSelection: string | null,
+): string | null {
+  if (dashboard.sourceOptions.length === 0) {
+    return null;
+  }
+
+  if (currentSelection && dashboard.sourceOptions.some((item) => item.id === currentSelection)) {
+    return currentSelection;
+  }
+
+  return dashboard.sourceOptions[0]?.id ?? null;
 }
 
 function iconHome(): string {
