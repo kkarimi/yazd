@@ -229,13 +229,15 @@ function render(): void {
   const settings = currentSettings();
   const dashboard = state.dashboard;
   const reviewLoad = describeReviewLoad(dashboard.reviewItems);
+  const hasConfiguredTarget = settings.knowledgeBasePath.trim().length > 0;
+  const isOnboarding = !hasConfiguredTarget;
   const connectedTarget = settings.knowledgeBasePath.trim() || "No target selected";
   const meta = viewMeta[state.activeView];
   const nextReviewItem = dashboard.reviewItems[0];
-  const primaryActionView: AppView = settings.knowledgeBasePath.trim() ? "review" : "settings";
+  const primaryActionView: AppView = hasConfiguredTarget ? "review" : "settings";
 
   app.innerHTML = `
-    <main class="app-shell ${isMacLike ? "platform-macos" : ""}">
+    <main class="app-shell ${isMacLike ? "platform-macos" : ""} ${isOnboarding ? "app-shell-onboarding" : ""}">
       <aside class="sidebar">
         <div class="sidebar-top">
           <section class="brand-block">
@@ -245,55 +247,87 @@ function render(): void {
           </section>
           <nav class="sidebar-nav" aria-label="Primary">
             ${renderNavButton("overview", "Home", iconHome())}
-            ${renderNavButton("review", `Review <span class="nav-count">${dashboard.reviewItems.length}</span>`, iconInbox())}
-            ${renderNavButton("publish", "Publish", iconPublish())}
-            ${renderNavButton("roadmap", "Roadmap", iconRoadmap())}
+            ${
+              hasConfiguredTarget
+                ? `
+                  ${renderNavButton("review", `Review <span class="nav-count">${dashboard.reviewItems.length}</span>`, iconInbox())}
+                  ${renderNavButton("publish", "Publish", iconPublish())}
+                  ${renderNavButton("roadmap", "Roadmap", iconRoadmap())}
+                `
+                : `
+                  <div class="sidebar-note sidebar-note-compact">
+                    <p>Review and publish appear after the first target is connected.</p>
+                  </div>
+                `
+            }
           </nav>
         </div>
 
         <div class="sidebar-middle">
-          <section class="sidebar-panel">
-            <div class="sidebar-panel-header">
-              <span>Current focus</span>
-              <span>${nextReviewItem ? `P${nextReviewItem.priority}` : "Quiet"}</span>
-            </div>
-            ${
-              nextReviewItem
-                ? `
-                  <button class="sidebar-row sidebar-row-featured" data-view="${primaryActionView}" type="button">
-                    <span class="sidebar-row-marker priority-${nextReviewItem.priority}"></span>
-                    <span class="sidebar-row-copy">
-                      <strong>${nextReviewItem.title}</strong>
-                      <small>${nextReviewItem.summary}</small>
-                    </span>
-                  </button>
-                `
-                : `
-                  <div class="sidebar-note">
-                    <p>No immediate review items. The landing screen can stay quiet until something needs attention.</p>
+          ${
+            hasConfiguredTarget
+              ? `
+                <section class="sidebar-panel">
+                  <div class="sidebar-panel-header">
+                    <span>Current focus</span>
+                    <span>${nextReviewItem ? `P${nextReviewItem.priority}` : "Quiet"}</span>
                   </div>
-                `
-            }
-          </section>
+                  ${
+                    nextReviewItem
+                      ? `
+                        <button class="sidebar-row sidebar-row-featured" data-view="${primaryActionView}" type="button">
+                          <span class="sidebar-row-marker priority-${nextReviewItem.priority}"></span>
+                          <span class="sidebar-row-copy">
+                            <strong>${nextReviewItem.title}</strong>
+                            <small>${nextReviewItem.summary}</small>
+                          </span>
+                        </button>
+                      `
+                      : `
+                        <div class="sidebar-note">
+                          <p>No immediate review items. The landing screen can stay quiet until something needs attention.</p>
+                        </div>
+                      `
+                  }
+                </section>
 
-          <section class="sidebar-panel">
-            <div class="sidebar-panel-header">
-              <span>Workspace</span>
-              <span>${settings.knowledgeBaseKind === "obsidian-vault" ? "Vault" : "Folder"}</span>
-            </div>
-            <div class="workspace-card">
-              <p class="workspace-path">${connectedTarget}</p>
-              <p class="workspace-meta">${agentOptions.find((option) => option.id === settings.agentId)?.label ?? "Unknown agent"}</p>
-            </div>
-          </section>
+                <section class="sidebar-panel">
+                  <div class="sidebar-panel-header">
+                    <span>Workspace</span>
+                    <span>${settings.knowledgeBaseKind === "obsidian-vault" ? "Vault" : "Folder"}</span>
+                  </div>
+                  <div class="workspace-card">
+                    <p class="workspace-path">${connectedTarget}</p>
+                    <p class="workspace-meta">${agentOptions.find((option) => option.id === settings.agentId)?.label ?? "Unknown agent"}</p>
+                  </div>
+                </section>
+              `
+              : `
+                <section class="sidebar-panel">
+                  <div class="sidebar-panel-header">
+                    <span>Setup</span>
+                    <span>First run</span>
+                  </div>
+                  <div class="sidebar-note">
+                    <p>Choose where approved output should land first. Agent and runtime details can stay secondary until that path is real.</p>
+                  </div>
+                </section>
+              `
+          }
         </div>
 
         <div class="sidebar-bottom">
-          <section class="runtime-card">
-            <p class="runtime-label">Gran runtime</p>
-            <strong>${dashboard.runtime.state === "configured" ? "Configured" : dashboard.runtime.state === "error" ? "Needs attention" : "Planned"}</strong>
-            <p>${dashboard.runtime.detail}</p>
-          </section>
+          ${
+            hasConfiguredTarget || settings.granEndpoint.trim()
+              ? `
+                <section class="runtime-card">
+                  <p class="runtime-label">Gran runtime</p>
+                  <strong>${dashboard.runtime.state === "configured" ? "Configured" : dashboard.runtime.state === "error" ? "Needs attention" : "Planned"}</strong>
+                  <p>${dashboard.runtime.detail}</p>
+                </section>
+              `
+              : ""
+          }
 
           <button class="settings-button ${state.activeView === "settings" ? "settings-button-active" : ""}" data-view="settings" type="button">
             <span class="settings-icon" aria-hidden="true">${iconSettings()}</span>
@@ -315,10 +349,20 @@ function render(): void {
             </div>
           </div>
           <div class="topbar-actions">
-            <div class="target-chip">${state.dashboardStatus === "loading" ? "Refreshing..." : connectedTarget}</div>
-            <div class="soft-chip ${state.dashboardStatus === "loading" ? "soft-chip-active" : ""}">
-              ${state.dashboardStatus === "loading" ? "Syncing dashboard" : reviewLoad}
-            </div>
+            ${
+              hasConfiguredTarget
+                ? `
+                  <div class="target-chip">${state.dashboardStatus === "loading" ? "Refreshing..." : connectedTarget}</div>
+                  <div class="soft-chip ${state.dashboardStatus === "loading" ? "soft-chip-active" : ""}">
+                    ${state.dashboardStatus === "loading" ? "Syncing dashboard" : reviewLoad}
+                  </div>
+                `
+                : `
+                  <div class="soft-chip ${state.dashboardStatus === "loading" ? "soft-chip-active" : ""}">
+                    ${state.dashboardStatus === "loading" ? "Checking setup" : "First-run setup"}
+                  </div>
+                `
+            }
             <button class="toolbar-button" data-view="settings" type="button">Open settings</button>
             ${renderWindowControls()}
           </div>
@@ -344,7 +388,7 @@ function renderViewContent(
   switch (view) {
     case "overview":
       return `
-        <section class="view-grid overview-grid zen-grid">
+        <section class="view-grid overview-grid zen-grid ${settings.knowledgeBasePath.trim() ? "" : "zen-grid-onboarding"}">
           <article class="pane-card hero-card zen-hero">
             <div class="zen-center">
               <p class="section-kicker">Start here</p>
@@ -363,18 +407,24 @@ function renderViewContent(
             </div>
           </article>
 
-          <article class="pane-card quiet-card">
-            <div class="card-header">
-              <div>
-                <p class="section-kicker">Next step</p>
-                <h3>${dashboard.reviewItems[0]?.title ?? "Everything is quiet"}</h3>
-              </div>
-            </div>
-            <div class="callout-card">
-              <p class="callout-title">${dashboard.reviewItems[0]?.bucket ?? "No queue"}</p>
-              <p>${dashboard.reviewItems[0]?.summary ?? "When there is nothing urgent, Yazd should stay out of the way."}</p>
-            </div>
-          </article>
+          ${
+            settings.knowledgeBasePath.trim()
+              ? `
+                <article class="pane-card quiet-card">
+                  <div class="card-header">
+                    <div>
+                      <p class="section-kicker">Next step</p>
+                      <h3>${dashboard.reviewItems[0]?.title ?? "Everything is quiet"}</h3>
+                    </div>
+                  </div>
+                  <div class="callout-card">
+                    <p class="callout-title">${dashboard.reviewItems[0]?.bucket ?? "No queue"}</p>
+                    <p>${dashboard.reviewItems[0]?.summary ?? "When there is nothing urgent, Yazd should stay out of the way."}</p>
+                  </div>
+                </article>
+              `
+              : ""
+          }
 
           <article class="pane-card quiet-card">
             <div class="card-header">
@@ -401,6 +451,25 @@ function renderViewContent(
               <p>Keep this selection lean. More knobs should appear only when they support a real workflow decision.</p>
             </div>
           </article>
+
+          ${
+            settings.knowledgeBasePath.trim()
+              ? ""
+              : `
+                <article class="pane-card quiet-card">
+                  <div class="card-header">
+                    <div>
+                      <p class="section-kicker">Workflow</p>
+                      <h3>Review and publish stay earned</h3>
+                    </div>
+                  </div>
+                  <div class="callout-card">
+                    <p class="callout-title">Progressive by default</p>
+                    <p>The queue and publish surfaces stay quiet until Yazd knows where approved work belongs.</p>
+                  </div>
+                </article>
+              `
+          }
         </section>
       `;
     case "review":

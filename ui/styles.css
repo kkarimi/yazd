@@ -321,6 +321,13 @@ summary {
   padding: 4px 2px 2px;
 }
 
+.sidebar-note-compact {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  padding: 12px;
+}
+
 .workspace-card,
 .runtime-card {
   display: grid;
@@ -400,6 +407,14 @@ summary {
   align-items: center;
   display: flex;
   gap: 12px;
+}
+
+.app-shell-onboarding .topbar-copy {
+  max-width: 42ch;
+}
+
+.app-shell-onboarding .topbar-actions {
+  justify-content: flex-end;
 }
 
 .window-controls {
@@ -527,6 +542,10 @@ select:focus {
 .zen-grid {
   align-items: start;
   grid-template-columns: minmax(0, 1.15fr) repeat(3, minmax(0, 0.6fr));
+}
+
+.zen-grid-onboarding {
+  grid-template-columns: minmax(0, 1.3fr) repeat(2, minmax(0, 0.7fr));
 }
 
 .detail-grid,
@@ -711,6 +730,10 @@ select:focus {
 .quiet-card {
   align-content: start;
   min-height: 220px;
+}
+
+.app-shell-onboarding .quiet-card {
+  min-height: 0;
 }
 
 .callout-title {
