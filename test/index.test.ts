@@ -495,6 +495,8 @@ describe("@kkarimi/yazd-core", () => {
     expect(dashboard.reviewItems.some((item) => item.bucket === "approval")).toBe(true);
     expect(dashboard.reviewItems.some((item) => item.bucket === "publish")).toBe(true);
     expect(dashboard.publishState.status).toBe("awaiting-approval");
+    expect(dashboard.sourceState?.status).toBe("sample");
+    expect(dashboard.sourceState?.title).toBe("Weekly Sync");
   });
 
   it("surfaces published paths in dashboard publish state", async () => {

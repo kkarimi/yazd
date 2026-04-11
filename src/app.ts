@@ -130,6 +130,13 @@ export interface AppActivityItem {
   title: string;
 }
 
+export interface AppSourceState {
+  detail: string;
+  status: "runtime" | "sample";
+  title: string;
+  updatedAt?: string;
+}
+
 export interface AppDashboard {
   activityItems: AppActivityItem[];
   draftPreview?: AppDraftPreview;
@@ -137,6 +144,7 @@ export interface AppDashboard {
   publishState: AppPublishState;
   reviewItems: AppReviewQueueItem[];
   runtime: AppRuntimeStatus;
+  sourceState?: AppSourceState;
   todoItems: AppTodoItem[];
   validation?: AppValidationResult;
 }
@@ -882,6 +890,7 @@ export async function buildDashboard(
     publishedPaths: [],
     status: "unavailable",
   };
+  let sourceState: AppSourceState | undefined;
 
   const runtimeInfo = await readGranRuntimeInfo(granEndpoint);
 
@@ -905,6 +914,14 @@ export async function buildDashboard(
     const fetched = await sourcePlugin.fetch({ id: sourceItem.id });
     const sourceBundle = await sourcePlugin.buildArtifacts({ id: sourceItem.id });
     const transcript = fetched.markdown ?? fetched.text ?? "";
+    sourceState = {
+      detail: granEndpoint
+        ? `Loaded from the Gran runtime at ${granEndpoint}.`
+        : "Loaded from the built-in local sample until a Gran runtime is configured.",
+      status: granEndpoint ? "runtime" : "sample",
+      title: sourceItem.title,
+      updatedAt: sourceItem.updatedAt,
+    };
     const agentResult = await agentPlugin.run({
       attachments: [
         {
@@ -1197,6 +1214,7 @@ export async function buildDashboard(
       publishState,
       reviewItems: sortYazdReviewItems(reviewItems) as AppReviewQueueItem[],
       runtime: createRuntimeStatus(granEndpoint, runtimeInfo),
+      sourceState,
       todoItems: sortTodo(roadmap),
       validation,
     };
@@ -1241,6 +1259,7 @@ export async function buildDashboard(
       publishState,
       reviewItems: sortYazdReviewItems(reviewItems) as AppReviewQueueItem[],
       runtime: createRuntimeStatus(granEndpoint, runtimeInfo, message),
+      sourceState,
       todoItems: sortTodo(roadmap),
       validation,
     };

@@ -367,6 +367,9 @@ function render(): void {
                   </div>
                 `
             }
+            <button class="toolbar-button" data-command="refresh" type="button" ${state.dashboardStatus === "loading" ? "disabled" : ""}>
+              ${state.dashboardStatus === "loading" ? "Refreshing..." : "Refresh"}
+            </button>
             <button class="toolbar-button" data-view="settings" type="button">Open settings</button>
             ${renderWindowControls()}
           </div>
@@ -455,6 +458,30 @@ function renderViewContent(
               <p>Keep this selection lean. More knobs should appear only when they support a real workflow decision.</p>
             </div>
           </article>
+
+          ${
+            settings.knowledgeBasePath.trim()
+              ? `
+                <article class="pane-card quiet-card">
+                  <div class="card-header">
+                    <div>
+                      <p class="section-kicker">Source</p>
+                      <h3>${dashboard.sourceState?.title ?? "No source loaded"}</h3>
+                    </div>
+                  </div>
+                  <div class="callout-card">
+                    <p class="callout-title">${dashboard.sourceState?.status === "runtime" ? "Gran runtime" : "Built-in sample"}</p>
+                    <p>${dashboard.sourceState?.detail ?? "The dashboard could not load a source item."}</p>
+                  </div>
+                  ${
+                    dashboard.sourceState?.updatedAt
+                      ? `<p class="muted">Updated ${formatTimestamp(dashboard.sourceState.updatedAt)}</p>`
+                      : ""
+                  }
+                </article>
+              `
+              : ""
+          }
 
           ${
             settings.knowledgeBasePath.trim()
@@ -994,6 +1021,7 @@ function wireEvents(): void {
   const knowledgeBaseSelect = document.querySelector<HTMLSelectElement>('select[name="knowledgeBaseKind"]');
   const knowledgeBasePathInput = document.querySelector<HTMLInputElement>('input[name="knowledgeBasePath"]');
   const granEndpointInput = document.querySelector<HTMLInputElement>('input[name="granEndpoint"]');
+  const commandButtons = document.querySelectorAll<HTMLButtonElement>("[data-command]");
   const navButtons = document.querySelectorAll<HTMLButtonElement>("[data-view]");
   const publishEntryButtons = document.querySelectorAll<HTMLButtonElement>("[data-publish-entry-id]");
   const reviewPreviewButtons = document.querySelectorAll<HTMLButtonElement>("[data-review-preview-mode]");
@@ -1014,6 +1042,15 @@ function wireEvents(): void {
       if (isAppView(view)) {
         state.activeView = view;
         render();
+      }
+    });
+  });
+
+  commandButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const command = button.dataset.command;
+      if (command === "refresh") {
+        void refreshDashboardNow();
       }
     });
   });
@@ -1150,6 +1187,20 @@ function wireEvents(): void {
 async function previewDraftState(): Promise<void> {
   state.validation = await validateKnowledgeBase(state.draftSettings);
   await refreshDashboard(state.draftSettings, state.reviewState, state.validation);
+}
+
+async function refreshDashboardNow(): Promise<void> {
+  state.message = "Refreshing dashboard...";
+  render();
+
+  try {
+    await refreshDashboard(savedSettings(), state.reviewState, state.validation);
+    state.message = "Dashboard refreshed.";
+  } catch (error) {
+    state.message = error instanceof Error ? error.message : String(error);
+  } finally {
+    render();
+  }
 }
 
 async function handleReviewAction(kind: AppReviewActionKind, itemId: string): Promise<void> {
