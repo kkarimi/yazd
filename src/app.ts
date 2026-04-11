@@ -918,6 +918,49 @@ function withActions(
   };
 }
 
+function buildActivityItems(
+  reviewState: AppReviewState,
+  sourceOptions: readonly AppSourceOption[],
+): AppActivityItem[] {
+  const sourceTitles = Object.fromEntries(sourceOptions.map((item) => [item.id, item.title]));
+  const items: AppActivityItem[] = [];
+
+  Object.entries(reviewState.itemDecisions).forEach(([itemId, record]) => {
+    if (!itemId.startsWith("approval:")) {
+      return;
+    }
+
+    const sourceId = itemId.slice("approval:".length);
+    const sourceTitle = sourceTitles[sourceId] ?? sourceId;
+    items.push({
+      at: record.actedAt,
+      detail:
+        record.decision === "approved"
+          ? `${sourceTitle} was approved and can move to publish.`
+          : `${sourceTitle} was rejected and should be rerun or revised.`,
+      kind: record.decision === "approved" ? "approval" : "rejection",
+      title: record.decision === "approved" ? "Draft approved" : "Draft rejected",
+    });
+  });
+
+  Object.entries(reviewState.publishedItems).forEach(([itemId, record]) => {
+    if (!itemId.startsWith("publish:")) {
+      return;
+    }
+
+    const sourceId = itemId.slice("publish:".length);
+    const sourceTitle = sourceTitles[sourceId] ?? sourceId;
+    items.push({
+      at: record.publishedAt,
+      detail: `Yazd wrote ${record.paths.length} files for ${sourceTitle}.`,
+      kind: "publish",
+      title: "Published to knowledge base",
+    });
+  });
+
+  return items.sort((left, right) => right.at.localeCompare(left.at));
+}
+
 export async function buildDashboard(
   settings: AppSettings,
   reviewState: AppReviewState = defaultAppReviewState(),
@@ -961,6 +1004,7 @@ export async function buildDashboard(
       title: item.title,
       updatedAt: item.updatedAt,
     }));
+    activityItems = buildActivityItems(reviewState, sourceOptions);
     const sourceItem = listResult.items.find((item) => item.id === selectedSourceItemId) ?? listResult.items[0];
     if (!sourceItem) {
       throw new Error("No source items were returned by the current source plugin.");
@@ -1016,28 +1060,6 @@ export async function buildDashboard(
       summary: structured.summary ?? "Draft is ready for review before publishing.",
       title: structured.title,
     };
-    if (approvalRecord) {
-      activityItems.push({
-        at: approvalRecord.actedAt,
-        detail:
-          approvalRecord.decision === "approved"
-            ? `${structured.title} was approved and can move to publish.`
-            : `${structured.title} was rejected and should be rerun or revised.`,
-        kind: approvalRecord.decision === "approved" ? "approval" : "rejection",
-        title: approvalRecord.decision === "approved" ? "Draft approved" : "Draft rejected",
-      });
-    }
-    if (publishedRecord) {
-      activityItems.push({
-        at: publishedRecord.publishedAt,
-        detail: `Yazd wrote ${publishedRecord.paths.length} files into the selected knowledge base.`,
-        kind: "publish",
-        title: "Published to knowledge base",
-      });
-    }
-    activityItems = activityItems
-      .slice()
-      .sort((left, right) => right.at.localeCompare(left.at));
 
     if (validation && !validation.valid) {
       reviewItems.push(

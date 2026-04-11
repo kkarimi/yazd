@@ -529,28 +529,35 @@ describe("@kkarimi/yazd-core", () => {
       knowledgeBasePath: "/Users/nima/Documents/Vault",
     };
 
-    const dashboard = await buildDashboard(settings, {
-      itemDecisions: {
-        "approval:gran:weekly-sync-2026-04-11": {
-          actedAt: "2026-04-11T10:00:00Z",
-          decision: "approved",
+    const dashboard = await buildDashboard(
+      settings,
+      {
+        itemDecisions: {
+          "approval:gran:weekly-sync-2026-04-11": {
+            actedAt: "2026-04-11T10:00:00Z",
+            decision: "approved",
+          },
+        },
+        publishedItems: {
+          "publish:gran:weekly-sync-2026-04-11": {
+            paths: [
+              "/Users/nima/Documents/Vault/Meetings/weekly-sync-briefing.md",
+              "/Users/nima/Documents/Vault/Decisions/weekly-sync-briefing.md",
+            ],
+            publishedAt: "2026-04-11T10:05:00Z",
+          },
         },
       },
-      publishedItems: {
-        "publish:gran:weekly-sync-2026-04-11": {
-          paths: [
-            "/Users/nima/Documents/Vault/Meetings/weekly-sync-briefing.md",
-            "/Users/nima/Documents/Vault/Decisions/weekly-sync-briefing.md",
-          ],
-          publishedAt: "2026-04-11T10:05:00Z",
-        },
-      },
-    });
+      undefined,
+      "gran:product-review-2026-04-10",
+    );
 
-    expect(dashboard.publishState.status).toBe("published");
-    expect(dashboard.publishState.publishedPaths).toHaveLength(2);
-    expect(dashboard.publishState.publishedAt).toBe("2026-04-11T10:05:00Z");
+    expect(dashboard.publishState.status).toBe("awaiting-approval");
+    expect(dashboard.publishState.publishedPaths).toHaveLength(0);
+    expect(dashboard.publishState.publishedAt).toBeUndefined();
     expect(dashboard.activityItems[0]?.kind).toBe("publish");
     expect(dashboard.activityItems[1]?.kind).toBe("approval");
+    expect(dashboard.activityItems[0]?.detail).toContain("Weekly Sync");
+    expect(dashboard.sourceState?.title).toBe("Product Review");
   });
 });
