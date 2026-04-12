@@ -948,12 +948,15 @@ function renderSettingsView(
             <summary>Gran integration</summary>
             <label class="field advanced-field">
               <span>Local runtime URL</span>
-              <input
-                name="granEndpoint"
-                type="text"
-                value="${escapeAttribute(settings.granEndpoint)}"
-                placeholder="http://127.0.0.1:4317"
-              />
+              <div class="field-row">
+                <input
+                  name="granEndpoint"
+                  type="text"
+                  value="${escapeAttribute(settings.granEndpoint)}"
+                  placeholder="http://127.0.0.1:4317"
+                />
+                <button type="button" class="toolbar-button" id="clear-gran-endpoint">Clear</button>
+              </div>
               <small>Optional for now. This should point at a local Gran runtime surface, not a remote Granola API.</small>
             </label>
           </details>
@@ -1096,6 +1099,7 @@ function renderNavButton(view: AppView, label: string, icon: string): string {
 function wireEvents(): void {
   const form = document.querySelector<HTMLFormElement>("#settings-form");
   const chooseFolderButton = document.querySelector<HTMLButtonElement>("#choose-folder");
+  const clearGranEndpointButton = document.querySelector<HTMLButtonElement>("#clear-gran-endpoint");
   const knowledgeBaseSelect = document.querySelector<HTMLSelectElement>('select[name="knowledgeBaseKind"]');
   const knowledgeBasePathInput = document.querySelector<HTMLInputElement>('input[name="knowledgeBasePath"]');
   const granEndpointInput = document.querySelector<HTMLInputElement>('input[name="granEndpoint"]');
@@ -1269,6 +1273,19 @@ function wireEvents(): void {
       await previewDraftState();
       render();
     }
+  });
+
+  clearGranEndpointButton?.addEventListener("click", async () => {
+    if (!form) {
+      return;
+    }
+
+    state.draftSettings = {
+      ...readFormSettings(form),
+      granEndpoint: "",
+    };
+    await previewDraftState();
+    render();
   });
 
   knowledgeBaseSelect?.addEventListener("change", () => {
