@@ -596,6 +596,10 @@ select:focus {
   position: relative;
 }
 
+.zen-grid-onboarding .hero-card {
+  grid-column: 1 / -1;
+}
+
 .zen-hero::before {
   background:
     radial-gradient(circle at top, rgba(120, 167, 255, 0.12), transparent 34%),
@@ -614,6 +618,61 @@ select:focus {
   position: relative;
   text-align: center;
   z-index: 1;
+}
+
+.overview-status-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.overview-status-pill {
+  align-items: center;
+  background: rgba(17, 19, 24, 0.64);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  display: inline-flex;
+  gap: 10px;
+  min-height: 48px;
+  padding: 8px 14px;
+}
+
+.overview-status-light {
+  background: var(--muted-soft);
+  border-radius: 999px;
+  box-shadow: 0 0 0 4px rgba(125, 132, 144, 0.14);
+  flex: 0 0 auto;
+  height: 8px;
+  width: 8px;
+}
+
+.overview-status-pill-ready .overview-status-light {
+  background: var(--success);
+  box-shadow: 0 0 0 4px rgba(87, 212, 170, 0.14);
+}
+
+.overview-status-pill-alert .overview-status-light {
+  background: #ff8f7d;
+  box-shadow: 0 0 0 4px rgba(255, 143, 125, 0.14);
+}
+
+.overview-status-copy {
+  display: grid;
+  gap: 1px;
+  text-align: left;
+}
+
+.overview-status-copy strong {
+  font-size: 0.92rem;
+}
+
+.overview-status-label {
+  color: var(--muted-soft);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .hero-copy h3 {

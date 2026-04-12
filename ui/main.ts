@@ -369,6 +369,7 @@ function renderViewContent(
         <section class="view-grid overview-grid zen-grid ${settings.knowledgeBasePath.trim() ? "" : "zen-grid-onboarding"}">
           <article class="pane-card hero-card zen-hero">
             <div class="zen-center">
+              ${renderOverviewStatusStrip(settings)}
               <p class="section-kicker">Start here</p>
               <h3>${settings.knowledgeBasePath.trim() ? "A calmer way to move work into your knowledge base." : "Point Yazd at where reviewed knowledge should live."}</h3>
               <p>
@@ -407,19 +408,6 @@ function renderViewContent(
               `
               : ""
           }
-
-          <article class="pane-card quiet-card">
-            <div class="card-header">
-              <div>
-                <p class="section-kicker">Target</p>
-                <h3>${settings.knowledgeBaseKind === "obsidian-vault" ? "Knowledge vault" : "Knowledge folder"}</h3>
-              </div>
-            </div>
-            <div class="callout-card">
-              <p class="callout-title">${settings.knowledgeBasePath.trim() ? "Connected" : "Not connected"}</p>
-              <p>${settings.knowledgeBasePath.trim() || "Select the local place where approved output should land."}</p>
-            </div>
-          </article>
 
           ${
             settings.knowledgeBasePath.trim()
@@ -476,25 +464,6 @@ function renderViewContent(
                 </article>
               `
               : ""
-          }
-
-          ${
-            settings.knowledgeBasePath.trim()
-              ? ""
-              : `
-                <article class="pane-card quiet-card">
-                  <div class="card-header">
-                    <div>
-                      <p class="section-kicker">Agent</p>
-                      <h3>${agentOptions.find((option) => option.id === settings.agentId)?.label ?? "Unknown agent"}</h3>
-                    </div>
-                  </div>
-                  <div class="callout-card">
-                    <p class="callout-title">Configured</p>
-                    <p>Keep setup lean. More controls should only appear once they support a real workflow decision.</p>
-                  </div>
-                </article>
-              `
           }
         </section>
       `;
@@ -939,6 +908,35 @@ function renderTopbarActions(
   }
 
   return pieces.join("");
+}
+
+function renderOverviewStatusStrip(settings: AppSettings): string {
+  const hasConfiguredTarget = settings.knowledgeBasePath.trim().length > 0;
+  const targetLabel = hasConfiguredTarget
+    ? settings.knowledgeBaseKind === "obsidian-vault"
+      ? "Vault connected"
+      : "Folder connected"
+    : "Target needed";
+  const agentLabel = agentOptions.find((option) => option.id === settings.agentId)?.label ?? "Unknown agent";
+
+  return `
+    <div class="overview-status-strip">
+      <div class="overview-status-pill ${hasConfiguredTarget ? "overview-status-pill-ready" : "overview-status-pill-alert"}">
+        <span class="overview-status-light" aria-hidden="true"></span>
+        <span class="overview-status-copy">
+          <span class="overview-status-label">Target</span>
+          <strong>${targetLabel}</strong>
+        </span>
+      </div>
+      <div class="overview-status-pill overview-status-pill-ready">
+        <span class="overview-status-light" aria-hidden="true"></span>
+        <span class="overview-status-copy">
+          <span class="overview-status-label">Agent</span>
+          <strong>${agentLabel}</strong>
+        </span>
+      </div>
+    </div>
+  `;
 }
 
 function renderValidationBlock(validation: AppValidationResult | null): string {
