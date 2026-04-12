@@ -77,25 +77,20 @@ const isMacLike = /Mac|iPhone|iPad|iPod/.test(globalThis.navigator.userAgent);
 const hasCustomWindowControls = isTauri() && !isMacLike;
 const appWindow = isTauri() ? getCurrentWindow() : null;
 
-const viewMeta: Record<AppView, { description: string; title: string }> = {
+const viewMeta: Record<AppView, { title: string }> = {
   overview: {
-    description: "See the current queue, target, and runtime posture in one place.",
     title: "Overview",
   },
   publish: {
-    description: "Preview where approved artifacts will land before anything writes.",
     title: "Publish",
   },
   review: {
-    description: "Work the next decision instead of scanning a long page.",
-    title: "Review Queue",
+    title: "Review",
   },
   roadmap: {
-    description: "Keep the architecture honest about what comes next.",
     title: "Roadmap",
   },
   settings: {
-    description: "Only expose the setup users actually need.",
     title: "Settings",
   },
 };
@@ -259,8 +254,7 @@ function render(): void {
         <div class="sidebar-top">
           <section class="brand-block">
             <p class="brand-eyebrow">Yazd</p>
-            <h1>Knowledge automation</h1>
-            <p class="brand-copy">Local-first workflows, review, and publishing without pushing source complexity into the UI.</p>
+            <h1>Yazd</h1>
           </section>
           <nav class="sidebar-nav" aria-label="Primary">
             ${renderNavButton("overview", "Home", iconHome())}
@@ -335,9 +329,7 @@ function render(): void {
               <span class="window-title">Yazd</span>
             </div>
             <div>
-            <p class="topbar-eyebrow">${meta.title}</p>
-            <h2>${meta.title}</h2>
-            <p class="topbar-copy">${meta.description}</p>
+              <h2>${meta.title}</h2>
             </div>
           </div>
           <div class="topbar-actions">
@@ -369,14 +361,7 @@ function renderViewContent(
         <section class="view-grid overview-grid zen-grid ${settings.knowledgeBasePath.trim() ? "" : "zen-grid-onboarding"}">
           <article class="pane-card hero-card zen-hero">
             <div class="zen-center">
-              ${renderOverviewStatusStrip(settings)}
-              <p class="section-kicker">Start here</p>
-              <h3>${settings.knowledgeBasePath.trim() ? "A calmer way to move work into your knowledge base." : "Point Yazd at where reviewed knowledge should live."}</h3>
-              <p>
-                ${settings.knowledgeBasePath.trim()
-                  ? "The heavy detail is there when you need it. The default screen should mainly answer what the next step is."
-                  : "Begin with the destination. Once the target is clear, review and publish can stay simple and intentional."}
-              </p>
+              <h3>${settings.knowledgeBasePath.trim() ? (dashboard.reviewItems[0]?.title ?? "Everything is quiet") : "Choose a target"}</h3>
               <div class="zen-actions">
                 <button class="primary-button zen-primary" data-view="${settings.knowledgeBasePath.trim() ? "review" : "settings"}" type="button">
                   ${settings.knowledgeBasePath.trim() ? "Continue review" : "Choose target"}
@@ -389,25 +374,6 @@ function renderViewContent(
               </div>
             </div>
           </article>
-
-          ${
-            settings.knowledgeBasePath.trim()
-              ? `
-                <article class="pane-card quiet-card">
-                  <div class="card-header">
-                    <div>
-                      <p class="section-kicker">Next step</p>
-                      <h3>${dashboard.reviewItems[0]?.title ?? "Everything is quiet"}</h3>
-                    </div>
-                  </div>
-                  <div class="callout-card">
-                    <p class="callout-title">${dashboard.reviewItems[0]?.bucket ?? "No queue"}</p>
-                    <p>${dashboard.reviewItems[0]?.summary ?? "When there is nothing urgent, Yazd should stay out of the way."}</p>
-                  </div>
-                </article>
-              `
-              : ""
-          }
 
           ${
             settings.knowledgeBasePath.trim()
@@ -891,8 +857,10 @@ function renderTopbarActions(
 
   if (state.dashboardStatus === "loading") {
     pieces.push(`<div class="soft-chip soft-chip-active">Refreshing</div>`);
-  } else if (!hasConfiguredTarget) {
-    pieces.push(`<div class="soft-chip">First-run setup</div>`);
+  }
+
+  if (view === "overview") {
+    pieces.push(renderOverviewStatusStrip(currentSettings()));
   } else if (view === "review") {
     pieces.push(`<div class="soft-chip">${reviewLoad}</div>`);
   } else if (view === "publish") {
@@ -916,24 +884,18 @@ function renderOverviewStatusStrip(settings: AppSettings): string {
     ? settings.knowledgeBaseKind === "obsidian-vault"
       ? "Vault connected"
       : "Folder connected"
-    : "Target needed";
+    : "No target";
   const agentLabel = agentOptions.find((option) => option.id === settings.agentId)?.label ?? "Unknown agent";
 
   return `
     <div class="overview-status-strip">
       <div class="overview-status-pill ${hasConfiguredTarget ? "overview-status-pill-ready" : "overview-status-pill-alert"}">
         <span class="overview-status-light" aria-hidden="true"></span>
-        <span class="overview-status-copy">
-          <span class="overview-status-label">Target</span>
-          <strong>${targetLabel}</strong>
-        </span>
+        <strong>${targetLabel}</strong>
       </div>
       <div class="overview-status-pill overview-status-pill-ready">
         <span class="overview-status-light" aria-hidden="true"></span>
-        <span class="overview-status-copy">
-          <span class="overview-status-label">Agent</span>
-          <strong>${agentLabel}</strong>
-        </span>
+        <strong>${agentLabel}</strong>
       </div>
     </div>
   `;

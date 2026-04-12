@@ -103,12 +103,11 @@ summary {
 
 .brand-block {
   display: grid;
-  gap: 6px;
+  gap: 2px;
   padding: 4px 4px 2px;
 }
 
 .brand-eyebrow,
-.topbar-eyebrow,
 .section-kicker,
 .item-meta,
 .runtime-label {
@@ -133,11 +132,10 @@ summary {
 }
 
 .brand-block h1 {
-  font-size: 1.05rem;
+  font-size: 1.1rem;
 }
 
 .brand-copy,
-.topbar-copy,
 .workspace-meta,
 .callout-card p,
 .stack-item p,
@@ -379,7 +377,7 @@ summary {
 
 .topbar-main {
   display: grid;
-  gap: 12px;
+  gap: 8px;
   min-width: 0;
 }
 
@@ -399,12 +397,7 @@ summary {
 }
 
 .topbar h2 {
-  font-size: clamp(1.9rem, 2.4vw, 2.6rem);
-}
-
-.topbar-copy {
-  margin-top: 6px;
-  max-width: 54ch;
+  font-size: clamp(1.7rem, 2.2vw, 2.2rem);
 }
 
 .topbar-actions {
@@ -415,10 +408,6 @@ summary {
 
 .topbar-actions:empty {
   display: none;
-}
-
-.app-shell-onboarding .topbar-copy {
-  max-width: 42ch;
 }
 
 .app-shell-onboarding .topbar-actions {
@@ -611,7 +600,7 @@ select:focus {
 
 .zen-center {
   display: grid;
-  gap: 16px;
+  gap: 24px;
   margin: 0 auto;
   max-width: 620px;
   place-items: center;
@@ -624,7 +613,7 @@ select:focus {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 .overview-status-pill {
@@ -657,22 +646,8 @@ select:focus {
   box-shadow: 0 0 0 4px rgba(255, 143, 125, 0.14);
 }
 
-.overview-status-copy {
-  display: grid;
-  gap: 1px;
-  text-align: left;
-}
-
-.overview-status-copy strong {
+.overview-status-pill strong {
   font-size: 0.92rem;
-}
-
-.overview-status-label {
-  color: var(--muted-soft);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .hero-copy h3 {
@@ -683,17 +658,13 @@ select:focus {
 .zen-center h3 {
   font-size: clamp(2rem, 3.2vw, 3rem);
   line-height: 1.05;
-}
-
-.zen-center p {
-  max-width: 56ch;
+  max-width: 12ch;
 }
 
 .zen-actions {
   display: flex;
   gap: 12px;
   justify-content: center;
-  padding-top: 6px;
 }
 
 .zen-actions .toolbar-button,
