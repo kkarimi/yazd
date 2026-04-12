@@ -271,11 +271,7 @@ function render(): void {
                   ${renderNavButton("publish", "Publish", iconPublish())}
                   ${renderNavButton("roadmap", "Roadmap", iconRoadmap())}
                 `
-                : `
-                  <div class="sidebar-note sidebar-note-compact">
-                    <p>Review and publish appear after the first target is connected.</p>
-                  </div>
-                `
+                : ""
             }
           </nav>
         </div>
@@ -320,17 +316,7 @@ function render(): void {
                   </div>
                 </section>
               `
-              : `
-                <section class="sidebar-panel">
-                  <div class="sidebar-panel-header">
-                    <span>Setup</span>
-                    <span>First run</span>
-                  </div>
-                  <div class="sidebar-note">
-                    <p>Choose where approved output should land first. Agent and runtime details can stay secondary until that path is real.</p>
-                  </div>
-                </section>
-              `
+              : ""
           }
         </div>
 
