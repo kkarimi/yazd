@@ -1002,6 +1002,7 @@ function renderSettingsView(
           }
           <button class="toolbar-button full-width" data-open-path="${escapeAttribute(bootstrap.configPath)}" type="button">Open config file</button>
           <button class="toolbar-button full-width" data-open-path="${escapeAttribute(bootstrap.reviewStatePath)}" type="button">Open review state</button>
+          <button class="toolbar-button toolbar-danger full-width" data-command="reset-review-state" type="button">Reset review state</button>
         </div>
       </article>
     </section>
@@ -1130,6 +1131,10 @@ function wireEvents(): void {
       const command = button.dataset.command;
       if (command === "refresh") {
         void refreshDashboardNow();
+        return;
+      }
+      if (command === "reset-review-state") {
+        void handleResetReviewState();
       }
     });
   });
@@ -1308,6 +1313,35 @@ async function handleOpenPath(path: string): Promise<void> {
   try {
     await openPath(path);
     state.message = "Opened in the system file manager.";
+  } catch (error) {
+    state.message = error instanceof Error ? error.message : String(error);
+  } finally {
+    render();
+  }
+}
+
+async function handleResetReviewState(): Promise<void> {
+  const confirmed = globalThis.confirm?.(
+    "Reset all local review decisions and publish history for this app?",
+  ) ?? true;
+
+  if (!confirmed) {
+    return;
+  }
+
+  state.message = "Resetting local review state...";
+  render();
+
+  try {
+    state.reviewState = await persistReviewState(defaultAppReviewState());
+    if (state.bootstrap) {
+      state.bootstrap = {
+        ...state.bootstrap,
+        reviewState: state.reviewState,
+      };
+    }
+    await refreshDashboard(savedSettings(), state.reviewState, state.validation);
+    state.message = "Local review state reset.";
   } catch (error) {
     state.message = error instanceof Error ? error.message : String(error);
   } finally {

@@ -484,6 +484,12 @@ select,
   justify-content: center;
 }
 
+.toolbar-danger {
+  background: rgba(255, 139, 115, 0.12);
+  border-color: rgba(255, 139, 115, 0.18);
+  color: #ff8b73;
+}
+
 .toolbar-button.full-width {
   width: 100%;
 }
