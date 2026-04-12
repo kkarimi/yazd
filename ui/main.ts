@@ -361,10 +361,10 @@ function renderViewContent(
         <section class="view-grid overview-grid zen-grid ${settings.knowledgeBasePath.trim() ? "" : "zen-grid-onboarding"}">
           <article class="pane-card hero-card zen-hero">
             <div class="zen-center">
-              <h3>${settings.knowledgeBasePath.trim() ? (dashboard.reviewItems[0]?.title ?? "Everything is quiet") : "Choose a target"}</h3>
+              <h3>${settings.knowledgeBasePath.trim() ? (dashboard.reviewItems[0]?.title ?? "Everything is quiet") : "Yazd"}</h3>
               <div class="zen-actions">
                 <button class="primary-button zen-primary" data-view="${settings.knowledgeBasePath.trim() ? "review" : "settings"}" type="button">
-                  ${settings.knowledgeBasePath.trim() ? "Continue review" : "Choose target"}
+                  ${settings.knowledgeBasePath.trim() ? "Continue review" : "Begin"}
                 </button>
                 ${
                   settings.knowledgeBasePath.trim()
