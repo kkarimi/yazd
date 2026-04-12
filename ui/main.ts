@@ -335,18 +335,6 @@ function render(): void {
         </div>
 
         <div class="sidebar-bottom">
-          ${
-            hasConfiguredTarget || settings.granEndpoint.trim()
-              ? `
-                <section class="runtime-card">
-                  <p class="runtime-label">Gran runtime</p>
-                  <strong>${dashboard.runtime.state === "configured" ? "Configured" : dashboard.runtime.state === "error" ? "Needs attention" : "Planned"}</strong>
-                  <p>${dashboard.runtime.detail}</p>
-                </section>
-              `
-              : ""
-          }
-
           <button class="settings-button ${state.activeView === "settings" ? "settings-button-active" : ""}" data-view="settings" type="button">
             <span class="settings-icon" aria-hidden="true">${iconSettings()}</span>
             <span>Settings</span>
@@ -367,24 +355,7 @@ function render(): void {
             </div>
           </div>
           <div class="topbar-actions">
-            ${
-              hasConfiguredTarget
-                ? `
-                  <div class="target-chip">${state.dashboardStatus === "loading" ? "Refreshing..." : connectedTarget}</div>
-                  <div class="soft-chip ${state.dashboardStatus === "loading" ? "soft-chip-active" : ""}">
-                    ${state.dashboardStatus === "loading" ? "Syncing dashboard" : reviewLoad}
-                  </div>
-                `
-                : `
-                  <div class="soft-chip ${state.dashboardStatus === "loading" ? "soft-chip-active" : ""}">
-                    ${state.dashboardStatus === "loading" ? "Checking setup" : "First-run setup"}
-                  </div>
-                `
-            }
-            <button class="toolbar-button" data-command="refresh" type="button" ${state.dashboardStatus === "loading" ? "disabled" : ""}>
-              ${state.dashboardStatus === "loading" ? "Refreshing..." : "Refresh"}
-            </button>
-            <button class="toolbar-button" data-view="settings" type="button">Open settings</button>
+            ${renderTopbarActions(state.activeView, hasConfiguredTarget, connectedTarget, reviewLoad)}
             ${renderWindowControls()}
           </div>
         </header>
@@ -421,9 +392,13 @@ function renderViewContent(
               </p>
               <div class="zen-actions">
                 <button class="primary-button zen-primary" data-view="${settings.knowledgeBasePath.trim() ? "review" : "settings"}" type="button">
-                  ${settings.knowledgeBasePath.trim() ? "Open review queue" : "Choose target"}
+                  ${settings.knowledgeBasePath.trim() ? "Continue review" : "Choose target"}
                 </button>
-                <button class="toolbar-button" data-view="settings" type="button">Settings</button>
+                ${
+                  settings.knowledgeBasePath.trim()
+                    ? `<button class="toolbar-button" data-view="publish" type="button">Open publish</button>`
+                    : `<button class="toolbar-button" data-view="settings" type="button">Settings</button>`
+                }
               </div>
             </div>
           </article>
@@ -460,19 +435,6 @@ function renderViewContent(
             </div>
           </article>
 
-          <article class="pane-card quiet-card">
-            <div class="card-header">
-              <div>
-                <p class="section-kicker">Agent</p>
-                <h3>${agentOptions.find((option) => option.id === settings.agentId)?.label ?? "Unknown agent"}</h3>
-              </div>
-            </div>
-            <div class="callout-card">
-              <p class="callout-title">${dashboard.runtime.eventMode === "sse" ? "Live" : dashboard.runtime.eventMode === "poll" ? "Polling" : "Configured"}</p>
-              <p>Keep this selection lean. More knobs should appear only when they support a real workflow decision.</p>
-            </div>
-          </article>
-
           ${
             settings.knowledgeBasePath.trim()
               ? `
@@ -492,7 +454,6 @@ function renderViewContent(
                       ? `<button class="toolbar-button" data-open-path="${escapeAttribute(dashboard.sourceState.url)}" type="button">Open source</button>`
                       : ""
                   }
-                  ${renderSourceSelector(dashboard)}
                   ${
                     dashboard.sourceState?.updatedAt
                       ? `<p class="muted">Updated ${formatTimestamp(dashboard.sourceState.updatedAt)}</p>`
@@ -517,48 +478,14 @@ function renderViewContent(
                     <p class="callout-title">${renderPublishStateLabel(dashboard)}</p>
                     <p>${renderPublishStateDetail(dashboard)}</p>
                   </div>
-                    ${
-                      dashboard.publishState.status === "published" && dashboard.publishState.publishedPaths.length > 0
-                        ? `
-                          <div class="preview-list compact-list">
-                            ${dashboard.publishState.publishedPaths.slice(0, 2).map((path) => `<p>${path}</p>`).join("")}
-                          </div>
-                        `
-                        : ""
-                    }
-                </article>
-
-                <article class="pane-card quiet-card">
-                  <div class="card-header">
-                    <div>
-                      <p class="section-kicker">Recent activity</p>
-                      <h3>${dashboard.activityItems[0]?.title ?? "Nothing yet"}</h3>
-                    </div>
-                  </div>
                   ${
-                    dashboard.activityItems.length > 0
+                    dashboard.publishState.status === "published" && dashboard.publishState.publishedPaths.length > 0
                       ? `
                         <div class="preview-list compact-list">
-                          ${dashboard.activityItems
-                            .slice(0, 3)
-                            .map(
-                              (item) => `
-                                <p>
-                                  <strong>${item.title}</strong><br />
-                                  <span class="activity-detail">${item.detail}</span><br />
-                                  <span class="muted">${formatTimestamp(item.at)}</span>
-                                </p>
-                              `,
-                            )
-                            .join("")}
+                          ${dashboard.publishState.publishedPaths.slice(0, 2).map((path) => `<p>${path}</p>`).join("")}
                         </div>
                       `
-                      : `
-                        <div class="callout-card">
-                          <p class="callout-title">No actions recorded</p>
-                          <p>Approval and publish events will appear here once the workflow starts moving.</p>
-                        </div>
-                      `
+                      : ""
                   }
                 </article>
               `
@@ -572,13 +499,13 @@ function renderViewContent(
                 <article class="pane-card quiet-card">
                   <div class="card-header">
                     <div>
-                      <p class="section-kicker">Workflow</p>
-                      <h3>Review and publish stay earned</h3>
+                      <p class="section-kicker">Agent</p>
+                      <h3>${agentOptions.find((option) => option.id === settings.agentId)?.label ?? "Unknown agent"}</h3>
                     </div>
                   </div>
                   <div class="callout-card">
-                    <p class="callout-title">Progressive by default</p>
-                    <p>The queue and publish surfaces stay quiet until Yazd knows where approved work belongs.</p>
+                    <p class="callout-title">Configured</p>
+                    <p>Keep setup lean. More controls should only appear once they support a real workflow decision.</p>
                   </div>
                 </article>
               `
@@ -885,14 +812,14 @@ function renderSettingsView(
   const pathLabel = settings.knowledgeBaseKind === "obsidian-vault" ? "Vault path" : "Folder path";
 
   return `
-    <section class="view-grid settings-grid">
+    <section class="view-grid settings-single">
       <article class="pane-card settings-card">
         <div class="card-header">
           <div>
             <p class="section-kicker">Setup</p>
             <h3>Only the knobs users need</h3>
           </div>
-          <span class="soft-chip ${state.saving ? "soft-chip-active" : ""}">${state.saving ? "Saving..." : "Local config"}</span>
+          <span class="soft-chip ${state.saving ? "soft-chip-active" : ""}">${state.saving ? "Saving..." : settings.knowledgeBasePath.trim() ? "Target connected" : "Needs target"}</span>
         </div>
 
         ${renderValidationBlock(validation)}
@@ -961,55 +888,71 @@ function renderSettingsView(
             </label>
           </details>
 
+          <details class="advanced">
+            <summary>Local files</summary>
+            <div class="settings-status-list">
+              <article class="summary-row">
+                <span>Target</span>
+                <strong>${settings.knowledgeBasePath.trim() || "Not connected"}</strong>
+              </article>
+              <article class="summary-row">
+                <span>Config</span>
+                <strong>${bootstrap.configPath}</strong>
+              </article>
+              <article class="summary-row">
+                <span>Review state</span>
+                <strong>${bootstrap.reviewStatePath}</strong>
+              </article>
+            </div>
+            <div class="settings-actions">
+              ${
+                settings.knowledgeBasePath.trim()
+                  ? `<button class="toolbar-button full-width" data-open-path="${escapeAttribute(settings.knowledgeBasePath)}" type="button">Open target folder</button>`
+                  : ""
+              }
+              <button class="toolbar-button full-width" data-open-path="${escapeAttribute(bootstrap.configPath)}" type="button">Open config file</button>
+              <button class="toolbar-button full-width" data-open-path="${escapeAttribute(bootstrap.reviewStatePath)}" type="button">Open review state</button>
+              <button class="toolbar-button toolbar-danger full-width" data-command="reset-review-state" type="button">Reset review state</button>
+            </div>
+          </details>
+
           <div class="form-footer">
-            <p>${state.message || "Settings are stored locally."}<br /><span class="muted">${bootstrap.configPath}</span></p>
+            <p>${state.message || "Settings are stored locally."}</p>
             <button type="submit" class="primary-button">Save setup</button>
           </div>
         </form>
       </article>
-
-      <article class="pane-card side-card">
-        <div class="card-header">
-          <div>
-            <p class="section-kicker">Current state</p>
-            <h3>Setup summary</h3>
-          </div>
-        </div>
-        <div class="summary-list">
-          <article class="summary-row">
-            <span>Target</span>
-            <strong>${settings.knowledgeBasePath.trim() || "Not connected"}</strong>
-          </article>
-          <article class="summary-row">
-            <span>Type</span>
-            <strong>${settings.knowledgeBaseKind === "obsidian-vault" ? "Obsidian vault" : "Folder"}</strong>
-          </article>
-          <article class="summary-row">
-            <span>Agent</span>
-            <strong>${agentOptions.find((option) => option.id === settings.agentId)?.label ?? "Unknown"}</strong>
-          </article>
-          <article class="summary-row">
-            <span>Gran</span>
-            <strong>${settings.granEndpoint.trim() || "Optional"}</strong>
-          </article>
-          <article class="summary-row">
-            <span>Review state</span>
-            <strong>${bootstrap.reviewStatePath}</strong>
-          </article>
-        </div>
-        <div class="settings-actions">
-          ${
-            settings.knowledgeBasePath.trim()
-              ? `<button class="toolbar-button full-width" data-open-path="${escapeAttribute(settings.knowledgeBasePath)}" type="button">Open target folder</button>`
-              : ""
-          }
-          <button class="toolbar-button full-width" data-open-path="${escapeAttribute(bootstrap.configPath)}" type="button">Open config file</button>
-          <button class="toolbar-button full-width" data-open-path="${escapeAttribute(bootstrap.reviewStatePath)}" type="button">Open review state</button>
-          <button class="toolbar-button toolbar-danger full-width" data-command="reset-review-state" type="button">Reset review state</button>
-        </div>
-      </article>
     </section>
   `;
+}
+
+function renderTopbarActions(
+  view: AppView,
+  hasConfiguredTarget: boolean,
+  connectedTarget: string,
+  reviewLoad: string,
+): string {
+  const pieces: string[] = [];
+
+  if (state.dashboardStatus === "loading") {
+    pieces.push(`<div class="soft-chip soft-chip-active">Refreshing</div>`);
+  } else if (!hasConfiguredTarget) {
+    pieces.push(`<div class="soft-chip">First-run setup</div>`);
+  } else if (view === "review") {
+    pieces.push(`<div class="soft-chip">${reviewLoad}</div>`);
+  } else if (view === "publish") {
+    pieces.push(`<div class="target-chip">${connectedTarget}</div>`);
+  }
+
+  if ((view === "review" || view === "publish") && hasConfiguredTarget) {
+    pieces.push(`
+      <button class="toolbar-button" data-command="refresh" type="button" ${state.dashboardStatus === "loading" ? "disabled" : ""}>
+        ${state.dashboardStatus === "loading" ? "Refreshing..." : "Refresh"}
+      </button>
+    `);
+  }
+
+  return pieces.join("");
 }
 
 function renderValidationBlock(validation: AppValidationResult | null): string {
