@@ -369,7 +369,7 @@ function renderViewContent(
                 ${
                   settings.knowledgeBasePath.trim()
                     ? `<button class="toolbar-button" data-view="publish" type="button">Open publish</button>`
-                    : `<button class="toolbar-button" data-view="settings" type="button">Settings</button>`
+                    : ""
                 }
               </div>
             </div>
