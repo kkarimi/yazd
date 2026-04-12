@@ -107,7 +107,7 @@ async function init(): Promise<void> {
   state.draftSettings = state.bootstrap.settings;
   state.selectedSourceItemId = loadSelectedSourceItemId();
   state.validation = await validateKnowledgeBase(state.bootstrap.settings);
-  state.message = "Local-first setup is ready.";
+  state.message = "";
   await refreshDashboard(state.bootstrap.settings, state.reviewState, state.validation);
   syncGranSubscription(state.bootstrap.settings, state.dashboard?.runtime.eventsUrl, state.dashboard?.runtime.eventMode);
   render();
@@ -730,15 +730,18 @@ function renderSettingsView(
   settings: AppSettings,
   validation: AppValidationResult | null,
 ): string {
-  const pathLabel = settings.knowledgeBaseKind === "obsidian-vault" ? "Vault path" : "Folder path";
+  const hasMultipleAgents = agentOptions.length > 1;
+  const destinationDescription =
+    settings.knowledgeBaseKind === "obsidian-vault"
+      ? "Use this when the destination is an Obsidian vault."
+      : "Use this when the destination is just a normal folder of markdown files.";
 
   return `
     <section class="view-grid settings-single">
       <article class="pane-card settings-card">
         <div class="card-header">
           <div>
-            <p class="section-kicker">Setup</p>
-            <h3>Only the knobs users need</h3>
+            <h3>Where should approved notes go?</h3>
           </div>
           <span class="soft-chip ${state.saving ? "soft-chip-active" : ""}">${state.saving ? "Saving..." : settings.knowledgeBasePath.trim() ? "Target connected" : "Needs target"}</span>
         </div>
@@ -747,23 +750,23 @@ function renderSettingsView(
 
         <form id="settings-form" class="settings-form">
           <label class="field">
-            <span>Knowledge base</span>
+            <span>Save to</span>
             <select name="knowledgeBaseKind">
               ${knowledgeBaseOptions
                 .map(
                   (option) => `
                     <option value="${option.id}" ${option.id === settings.knowledgeBaseKind ? "selected" : ""}>
-                      ${option.label}
+                      ${option.id === "obsidian-vault" ? "Obsidian" : "Folder"}
                     </option>
                   `,
                 )
                 .join("")}
             </select>
-            <small>${knowledgeBaseOptions.find((option) => option.id === settings.knowledgeBaseKind)?.description ?? ""}</small>
+            <small>${destinationDescription}</small>
           </label>
 
           <label class="field">
-            <span>${pathLabel}</span>
+            <span>Location</span>
             <div class="field-row">
               <input
                 name="knowledgeBasePath"
@@ -773,29 +776,35 @@ function renderSettingsView(
               />
               <button type="button" class="toolbar-button" id="choose-folder">Choose</button>
             </div>
-            <small>Start with the exact local destination. The publish plugin can stay interchangeable behind it.</small>
+            <small>Yazd writes approved notes into this folder.</small>
           </label>
 
-          <label class="field">
-            <span>Agent</span>
-            <select name="agentId">
-              ${agentOptions
-                .map(
-                  (option) => `
-                    <option value="${option.id}" ${option.id === settings.agentId ? "selected" : ""}>
-                      ${option.label}
-                    </option>
-                  `,
-                )
-                .join("")}
-            </select>
-            <small>${agentOptions.find((option) => option.id === settings.agentId)?.description ?? ""}</small>
-          </label>
+          ${
+            hasMultipleAgents
+              ? `
+                <label class="field">
+                  <span>Writing agent</span>
+                  <select name="agentId">
+                    ${agentOptions
+                      .map(
+                        (option) => `
+                          <option value="${option.id}" ${option.id === settings.agentId ? "selected" : ""}>
+                            ${option.label}
+                          </option>
+                        `,
+                      )
+                      .join("")}
+                  </select>
+                  <small>Choose which writing engine Yazd should use for drafts.</small>
+                </label>
+              `
+              : `<input name="agentId" type="hidden" value="${escapeAttribute(settings.agentId)}" />`
+          }
 
           <details class="advanced">
-            <summary>Gran integration</summary>
+            <summary>Gran (optional)</summary>
             <label class="field advanced-field">
-              <span>Local runtime URL</span>
+              <span>Local runtime</span>
               <div class="field-row">
                 <input
                   name="granEndpoint"
@@ -805,23 +814,19 @@ function renderSettingsView(
                 />
                 <button type="button" class="toolbar-button" id="clear-gran-endpoint">Clear</button>
               </div>
-              <small>Optional for now. This should point at a local Gran runtime surface, not a remote Granola API.</small>
+              <small>Only fill this in if you run a local Gran runtime. Otherwise leave it blank.</small>
             </label>
           </details>
 
           <details class="advanced">
-            <summary>Local files</summary>
+            <summary>Advanced</summary>
             <div class="settings-status-list">
               <article class="summary-row">
-                <span>Target</span>
-                <strong>${settings.knowledgeBasePath.trim() || "Not connected"}</strong>
-              </article>
-              <article class="summary-row">
-                <span>Config</span>
+                <span>Settings file</span>
                 <strong>${bootstrap.configPath}</strong>
               </article>
               <article class="summary-row">
-                <span>Review state</span>
+                <span>Review history</span>
                 <strong>${bootstrap.reviewStatePath}</strong>
               </article>
             </div>
@@ -831,14 +836,14 @@ function renderSettingsView(
                   ? `<button class="toolbar-button full-width" data-open-path="${escapeAttribute(settings.knowledgeBasePath)}" type="button">Open target folder</button>`
                   : ""
               }
-              <button class="toolbar-button full-width" data-open-path="${escapeAttribute(bootstrap.configPath)}" type="button">Open config file</button>
-              <button class="toolbar-button full-width" data-open-path="${escapeAttribute(bootstrap.reviewStatePath)}" type="button">Open review state</button>
-              <button class="toolbar-button toolbar-danger full-width" data-command="reset-review-state" type="button">Reset review state</button>
+              <button class="toolbar-button full-width" data-open-path="${escapeAttribute(bootstrap.configPath)}" type="button">Open settings file</button>
+              <button class="toolbar-button full-width" data-open-path="${escapeAttribute(bootstrap.reviewStatePath)}" type="button">Open review history</button>
+              <button class="toolbar-button toolbar-danger full-width" data-command="reset-review-state" type="button">Reset review history</button>
             </div>
           </details>
 
           <div class="form-footer">
-            <p>${state.message || "Settings are stored locally."}</p>
+            <p>${state.message || "Saved locally."}</p>
             <button type="submit" class="primary-button">Save setup</button>
           </div>
         </form>
